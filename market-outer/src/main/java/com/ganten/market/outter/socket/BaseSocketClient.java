@@ -49,9 +49,9 @@ public abstract class BaseSocketClient extends WebSocketClient {
             return;
         }
         log.info("[{}] WebSocket is open, proceeding to subscribe.", market);
-        String subscription = this.buildSubscription(Arrays.asList(Contract.values()));
-        log.info("[{}] subscribe message:{}", market, subscription);
-        this.send(subscription);
+        List<String> subscriptions = this.buildSubscription(Arrays.asList(Contract.values()));
+        log.info("[{}] subscribe message:{}", market, subscriptions);
+        subscriptions.forEach(this::send);
     }
 
     protected abstract Consumer<String> getApiCallback();
@@ -61,5 +61,5 @@ public abstract class BaseSocketClient extends WebSocketClient {
         this.getApiCallback().accept(message);
     }
 
-    protected abstract String buildSubscription(List<Contract> symbols);
+    protected abstract List<String> buildSubscription(List<Contract> symbols);
 }

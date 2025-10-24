@@ -11,9 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 public class SocketTask {
 
     @Scheduled(fixedDelay = 90000, initialDelay = 10000)
-    public void binance() {
-        SocketConnecter binanceConnecter = new SocketConnecter(Market.BINANCE);
-        binanceConnecter.checkAndSubscribe();
+    public void hashkey() {
+        SocketConnecter hashkeyConnecter = new SocketConnecter(Market.HASHKEY);
+        hashkeyConnecter.checkAndSubscribe();
     }
 
     @Scheduled(fixedDelay = 90000, initialDelay = 10000)

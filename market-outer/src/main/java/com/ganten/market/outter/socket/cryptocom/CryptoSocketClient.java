@@ -58,7 +58,7 @@ public class CryptoSocketClient extends BaseSocketClient {
     }
 
     @Override
-    protected String buildSubscription(List<Contract> symbols) {
+    protected List<String> buildSubscription(List<Contract> symbols) {
         List<String> channels = new ArrayList<>();
         for (Contract s : symbols) {
             channels.add("ticker." + s.getBase() + "_" + s.getQuote());
@@ -66,6 +66,6 @@ public class CryptoSocketClient extends BaseSocketClient {
         Map<String, Object> channelsMap = Collections.singletonMap(Constants.CRYPTO_CHANNELS, channels);
         CryptoRequest request =
                 new CryptoRequest(id++, Constants.CRYPTO_COM_SUBSCRIBE, channelsMap, System.currentTimeMillis());
-        return JsonUtils.toJson(request);
+        return Collections.singletonList(JsonUtils.toJson(request));
     }
 }

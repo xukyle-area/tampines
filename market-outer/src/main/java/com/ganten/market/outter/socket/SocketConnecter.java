@@ -2,8 +2,8 @@ package com.ganten.market.outter.socket;
 
 import java.net.URISyntaxException;
 import com.ganten.market.common.pojo.Market;
-import com.ganten.market.outter.socket.binance.BinanceSocketClient;
 import com.ganten.market.outter.socket.cryptocom.CryptoSocketClient;
+import com.ganten.market.outter.socket.hashkey.HashkeySocketClient;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -32,8 +32,8 @@ public class SocketConnecter {
     public synchronized void reconnect() {
         BaseSocketClient nextClient;
         try {
-            if (market.equals(Market.BINANCE)) {
-                nextClient = new BinanceSocketClient();
+            if (market.equals(Market.HASHKEY)) {
+                nextClient = new HashkeySocketClient();
             } else if (market.equals(Market.CRYPTO_COM)) {
                 nextClient = new CryptoSocketClient();
             } else {
