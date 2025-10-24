@@ -17,5 +17,4 @@ public class HashkeyEvent {
     private String channelId;
     private boolean shared;
     private String id;
-
 }
