@@ -43,7 +43,7 @@ public class SocketConnecter {
             log.error("[{}] URL format is invalid!", market, e);
             return;
         }
-        log.info("[{}] build websocket client success, websocket of {}", market);
+        log.info("[{}] build websocket client success!", market);
         try {
             if (curClient != null) {
                 curClient.close();
