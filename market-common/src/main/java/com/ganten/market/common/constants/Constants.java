@@ -2,9 +2,8 @@ package com.ganten.market.common.constants;
 
 public class Constants {
 
-    public final static String BINANCE_URL = "wss://proxy-binance-stream.yax.tech/stream";
+    
     public final static String BINANCE_SUBSCRIBE = "SUBSCRIBE";
-    public final static String CRYPTO_URL = "wss://stream.crypto.com/v2/market";
     public final static String CRYPTO_COM_SUBSCRIBE = "subscribe";
     public final static String CRYPTO_CHANNELS = "channels";
 

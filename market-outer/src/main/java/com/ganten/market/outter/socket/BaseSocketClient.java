@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import com.ganten.market.common.enums.Contract;
+import com.ganten.market.common.pojo.Market;
 import com.ganten.market.outter.writer.QuoteWriter;
 import com.ganten.market.outter.writer.RedisQuoteWriter;
 import lombok.extern.slf4j.Slf4j;
@@ -17,8 +18,11 @@ public abstract class BaseSocketClient extends WebSocketClient {
 
     protected static final QuoteWriter redisWriter = RedisQuoteWriter.of("localhost:6379", "redispassword");
 
-    public BaseSocketClient(String serverUri) throws URISyntaxException {
+    private final Market market;
+
+    public BaseSocketClient(String serverUri, Market market) throws URISyntaxException {
         super(new URI(serverUri));
+        this.market = market;
     }
 
     @Override
@@ -28,7 +32,8 @@ public abstract class BaseSocketClient extends WebSocketClient {
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
-        log.info("Connection closed by {}, Code: {}, Reason: {}", (remote ? "remote peer" : "us"), code, reason);
+        log.info("[{}], Connection closed by {}, Code: {}, Reason: {}", market, (remote ? "remote peer" : "us"), code,
+                reason);
         log.info("WebSocket连接已关闭, 准备重新连接...");
     }
 

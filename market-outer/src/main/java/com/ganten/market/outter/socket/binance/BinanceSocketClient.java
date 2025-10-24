@@ -16,10 +16,12 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class BinanceSocketClient extends BaseSocketClient {
 
+    private final static String BINANCE_URL = "wss://proxy-binance-stream.yax.tech/stream";
+
     private long id;
 
     public BinanceSocketClient() throws URISyntaxException {
-        super(Constants.BINANCE_URL);
+        super(BINANCE_URL, Market.BINANCE);
         id = 1L;
     }
 

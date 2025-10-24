@@ -5,6 +5,7 @@ import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.PostConstruct;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -54,14 +55,11 @@ public class QuoteHealthyTask {
         for (Contract contract : Contract.values()) {
 
             Map<Market, BigDecimal> priceMap = QuoteHealthyTask.getPriceMap(contract.getId());
-            if (!priceMap.containsKey(Market.GANTEN) || priceMap.size() < 2) {
-                log.info("Skip calculating std for contract {}, missing GANTEN market data", contract.getSymbol());
+            if (priceMap.size() < 2) {
                 continue;
             }
             BigDecimal std = QuoteHealthyTask.calculateStd(priceMap);
-            if (std.compareTo(new BigDecimal(stdThreshold)) > 0) {
-                log.error("orderBookMetrics alert, thirdpartyQuoteStd, {} = {}", contract.getSymbol(), std);
-            }
+            log.info("Contract {} std rate: {}", contract.getSymbol(), std.toPlainString());
         }
     }
 
@@ -77,12 +75,12 @@ public class QuoteHealthyTask {
         // 获取市场价格并记录失败市场
         for (Market market : Market.values()) {
             String key = RedisUtils.generateRedisQuoteKey(contractId, market);
-            try {
-                BigDecimal last = new BigDecimal(jedis.hget(key, "last"));
-                priceMap.put(market, last);
-            } catch (Exception e) {
-                log.error("Failed to get price for contractId: {}, market: {}", contractId, market);
+            String lastStr = jedis.hget(key, "last");
+            if (StringUtils.isBlank(lastStr)) {
+                continue;
             }
+            BigDecimal last = new BigDecimal(lastStr);
+            priceMap.put(market, last);
         }
         return priceMap;
     }

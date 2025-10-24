@@ -16,13 +16,13 @@ public class SocketConnecter {
     }
 
     public void checkAndSubscribe() {
-        log.info("Checking websocket connection for market: {}", market);
+        log.info("[{}] Checking websocket connection.", market);
         if (curClient == null || !curClient.isOpen()) {
-            log.info("websocket of {} is not open, try to reconnect", market);
+            log.info("[{}] websocket is not open, try to reconnect.", market);
             reconnect();
         }
         if (curClient == null || !curClient.isOpen()) {
-            log.error("websocket of {} is still not open after reconnecting", market);
+            log.error("[{}] websocket is still not open after reconnecting.", market);
             return;
         }
         curClient.subscribe();
@@ -36,14 +36,14 @@ public class SocketConnecter {
             } else if (market.equals(Market.CRYPTO_COM)) {
                 nextClient = new CryptoSocketClient();
             } else {
-                log.error("Unsupported QuoteEnum type: {}", market);
+                log.error("[{}] Unsupported QuoteEnum type: {}", market);
                 return;
             }
         } catch (URISyntaxException e) {
-            log.error("URL format is invalid!", e);
+            log.error("[{}] URL format is invalid!", market, e);
             return;
         }
-        log.info("build websocket client success, websocket of {}", market);
+        log.info("[{}] build websocket client success, websocket of {}", market);
         try {
             if (curClient != null) {
                 curClient.close();
@@ -51,7 +51,7 @@ public class SocketConnecter {
             nextClient.connect();
             curClient = nextClient;
         } catch (Exception e) {
-            log.error("Error reconnecting: {}", e.getMessage(), e);
+            log.error("[{}] Error reconnecting: {}", market, e.getMessage(), e);
         }
     }
 }
