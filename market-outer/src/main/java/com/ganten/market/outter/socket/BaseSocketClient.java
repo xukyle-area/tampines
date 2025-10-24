@@ -27,29 +27,29 @@ public abstract class BaseSocketClient extends WebSocketClient {
 
     @Override
     public void onOpen(ServerHandshake data) {
-        log.info("WebSocket 连接已打开!");
+        log.info("[{}] WebSocket 连接已打开!", market);
     }
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
-        log.info("[{}], Connection closed by {}, Code: {}, Reason: {}", market, (remote ? "remote peer" : "us"), code,
+        log.info("[{}] Connection closed by {}, Code: {}, Reason: {}", market, (remote ? "remote peer" : "us"), code,
                 reason);
-        log.info("WebSocket连接已关闭, 准备重新连接...");
+        log.info("[{}] WebSocket连接已关闭, 准备重新连接...", market);
     }
 
     @Override
     public void onError(Exception ex) {
-        log.error("WebSocket连接发生错误...", ex);
+        log.error("[{}] WebSocket连接发生错误...", market, ex);
     }
 
     public void subscribe() {
         if (!this.isOpen()) {
-            log.error("WebSocket is not open, cannot subscribe.");
+            log.error("[{}] WebSocket is not open, cannot subscribe.", market);
             return;
         }
-        log.info("WebSocket is open, proceeding to subscribe.");
+        log.info("[{}] WebSocket is open, proceeding to subscribe.", market);
         String subscription = this.buildSubscription(Arrays.asList(Contract.values()));
-        log.info("subscribe message:{}", subscription);
+        log.info("[{}] subscribe message:{}", market, subscription);
         this.send(subscription);
     }
 

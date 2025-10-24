@@ -14,12 +14,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class CryptoSocketClient extends BaseSocketClient {
 
-    private final static String CRYPTO_URL = "wss://stream.crypto.com/exchange/v1/market";
+    private final static String CRYPTO_URL = "wss://uat-stream.3ona.co/exchange/v1/market";
 
     private long id;
 
     public CryptoSocketClient() throws URISyntaxException {
         super(CRYPTO_URL, Market.CRYPTO_COM);
+        log.info(CRYPTO_URL);
         id = 1L;
     }
 

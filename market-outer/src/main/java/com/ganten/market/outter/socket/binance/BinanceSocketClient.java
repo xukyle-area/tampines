@@ -22,6 +22,7 @@ public class BinanceSocketClient extends BaseSocketClient {
 
     public BinanceSocketClient() throws URISyntaxException {
         super(BINANCE_URL, Market.BINANCE);
+        log.info(BINANCE_URL);
         id = 1L;
     }
 
