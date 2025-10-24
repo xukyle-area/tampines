@@ -30,14 +30,10 @@ public class MqttWriter implements QuoteOperator {
     private static final Logger log = LoggerFactory.getLogger(MqttWriter.class);
 
     private static final String TOPIC = "api";
-    private static final String TICK_TOPIC = "api/exodus/quote/%s/tick/?lang=lang_neutral&format=json";
-    private static final String TRADE_TOPIC = "api/exodus/quote/%s/trade/?lang=lang_neutral&format=json";
-    private static final String ORDER_BOOK_TOPIC =
-            "api/exodus/quote/%s/orderBook/?lang=lang_neutral&format=json&grouping=%s";
-    private static final String DIFF_ORDER_BOOK_TOPIC =
-            "api/exodus/quote/%s/diffOrderBook/?lang=lang_neutral&format=json&grouping=%s";
-    private static final String CANDLE_TOPIC =
-            "api/exodus/quote/%s/candle/?lang=lang_neutral&format=json&resolution=%s";
+    private static final String TICK_TOPIC = "api/exodus/quote/%s/tick";
+    private static final String TRADE_TOPIC = "api/exodus/quote/%s/trade";
+    private static final String ORDER_BOOK_TOPIC = "api/exodus/quote/%s/orderBook/?&grouping=%s";
+    private static final String CANDLE_TOPIC = "api/exodus/quote/%s/candle/?resolution=%s";
     private static String diffOrderBookKafkaTopic;
 
     private final Producer<String, String> producer;
@@ -71,7 +67,7 @@ public class MqttWriter implements QuoteOperator {
         msg.setAsk(tick.getAsk().toString());
         msg.setBid(tick.getBid().toString());
 
-        if (last24HPrice != null && !"".equals(tick.getLast())) {
+        if (last24HPrice != null && tick.getLast() != null) {
             BigDecimal last = tick.getLast();
             BigDecimal first = new BigDecimal(last24HPrice);
             BigDecimal change = last.subtract(first);
@@ -149,7 +145,6 @@ public class MqttWriter implements QuoteOperator {
     }
 
     private void sendKafka(ResultEventHolder reh) {
-
         producer.send(new ProducerRecord<String, String>(diffOrderBookKafkaTopic, JsonUtils.toJson(reh)),
                 (metadata, ex) -> {
                     if (ex != null) {
@@ -171,18 +166,19 @@ public class MqttWriter implements QuoteOperator {
         if (contract == null) {
             return;
         }
+
+        TradeMsg msg = new TradeMsg();
         int tickSize = DecimalUtils.getScale(new BigDecimal(contract.getTickSize()));
         int lotSize = DecimalUtils.getScale(new BigDecimal(contract.getLotSize()));
-        TradeMsg msg = new TradeMsg();
         msg.setSymbol(contract.getSymbol());
         msg.setTimestamp(tradeInfo.getTime());
         msg.setId(tradeInfo.getId());
-        msg.setPrice(tradeInfo.getPrice().toString());
         msg.setTime(tradeInfo.getTime());
-        msg.setVolume(tradeInfo.getVolume().toString());
+        msg.setPrice(tradeInfo.getPrice().setScale(tickSize).toString());
+        msg.setVolume(tradeInfo.getVolume().setScale(lotSize).toString());
         msg.setSide(tradeInfo.isBuyerMaker() ? "bid" : "ask");
 
-        sendMqtt(String.format(TRADE_TOPIC, contract.getSymbol()), msg);
+        this.sendMqtt(String.format(TRADE_TOPIC, contract.getSymbol()), msg);
     }
 
     @Override

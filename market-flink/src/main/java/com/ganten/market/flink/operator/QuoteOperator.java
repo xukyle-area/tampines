@@ -23,4 +23,5 @@ public interface QuoteOperator {
     default List<TradeInfo> getTrade(long contractId, long startTime, long endTime) {
         return null;
     }
+
 }

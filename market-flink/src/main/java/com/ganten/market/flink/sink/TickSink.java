@@ -8,8 +8,6 @@ import com.ganten.market.common.pojo.Market;
 import com.ganten.market.common.pojo.ResultEventHolder;
 
 public class TickSink extends AbstractSink<ResultEventHolder> {
-
-    private static final long MS_ONE_HOUR = 60 * 60 * 1000;
     private final Market market;
     private transient Counter errorCounter;
     private transient Counter healthyCounter;

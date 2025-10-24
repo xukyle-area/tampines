@@ -17,25 +17,29 @@ import com.ganten.market.flink.utils.FlinkUtils;
 import com.ganten.market.flink.utils.KafkaSourceUtils;
 import com.twitter.chill.protobuf.ProtobufSerializer;
 
-public class DiffOrderbookIndexerJob {
-
+public class DiffOrderbookJob {
     public static void main(String[] args) throws Exception {
-        final ParameterTool parameterTool = ParameterTool
-                .fromPropertiesFile(DiffOrderbookIndexerJob.class.getClassLoader().getResourceAsStream(args[0]));
-        final KafkaSource<ResultEventHolder> source = KafkaSourceUtils.ofParameterTool(parameterTool);
-        final StreamExecutionEnvironment see = StreamExecutionEnvironment.getExecutionEnvironment().setParallelism(1);
+        final ParameterTool parameterTool = ParameterTool.fromPropertiesFile(
+                DiffOrderbookJob.class.getClassLoader().getResourceAsStream(args[0]));
+        final KafkaSource<ResultEventHolder> source =
+                KafkaSourceUtils.ofParameterTool(parameterTool);
+        final StreamExecutionEnvironment see =
+                StreamExecutionEnvironment.getExecutionEnvironment().setParallelism(1);
         FlinkUtils.configureStreamExecutionEnvironment(see, parameterTool);
-        see.getConfig().registerTypeWithKryoSerializer(ResultEventHolder.class, ProtobufSerializer.class);
+        see.getConfig().registerTypeWithKryoSerializer(ResultEventHolder.class,
+                ProtobufSerializer.class);
         see.setRestartStrategy(RestartStrategies.fixedDelayRestart(5, 5 * 1000));
 
-        final long windowSizeMillis = Long.parseLong(parameterTool.get("window.size.millis", "1000"));
-        see.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source")
-                .filter(t -> t.getResult_event_type() == ResultEventType.RESULT_EVENT_TYPE_DIFFORDERBOOK
-                        || t.getResult_event_type() == ResultEventType.RESULT_EVENT_TYPE_DIFFORDERBOOKALL)
+        final long windowSizeMillis =
+                Long.parseLong(parameterTool.get("window.size.millis", "1000"));
+        see.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source").filter(t -> t
+                .getResult_event_type() == ResultEventType.RESULT_EVENT_TYPE_DIFFORDERBOOK
+                || t.getResult_event_type() == ResultEventType.RESULT_EVENT_TYPE_DIFFORDERBOOKALL)
                 .keyBy(ResultEventHolder::getContractId)
                 .window(TumblingProcessingTimeWindows.of(Time.milliseconds(windowSizeMillis)))
-                .aggregate(new ResultEventAggregate()).process(new DiffOrderbookCalculator(parameterTool.toMap()))
-                .addSink(new DiffOrderBookSink(Market.EXODUS)).name("diffOrderBookSink").uid("diffOrderBookSink")
+                .aggregate(new ResultEventAggregate()).process(new DiffOrderbookCalculator())
+                .addSink(new DiffOrderBookSink(Market.EXODUS)).name("diffOrderBookSink")
+                .uid("diffOrderBookSink")
                 .setParallelism(parameterTool.getInt("process.parallelism"));
 
         see.execute(parameterTool.get("job.name"));

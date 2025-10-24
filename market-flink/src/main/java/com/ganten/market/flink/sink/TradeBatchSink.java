@@ -1,7 +1,6 @@
 package com.ganten.market.flink.sink;
 
 import java.util.List;
-import java.util.Map;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import com.ganten.market.common.pojo.ResultEventHolder;
@@ -15,9 +14,7 @@ public class TradeBatchSink extends RichSinkFunction<List<ResultEventHolder>> {
     private static final int batchSize = 25;
 
     @Override
-    public void open(Configuration parameters) throws Exception {
-        Map<String, String> mapConf = getRuntimeContext().getExecutionConfig().getGlobalJobParameters().toMap();
-    }
+    public void open(Configuration parameters) throws Exception {}
 
     @Override
     public void invoke(List<ResultEventHolder> value, Context context) throws Exception {

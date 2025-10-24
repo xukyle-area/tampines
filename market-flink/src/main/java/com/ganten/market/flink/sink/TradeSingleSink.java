@@ -8,7 +8,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.metrics.Counter;
-import org.apache.flink.metrics.Gauge;
 import org.apache.flink.metrics.SimpleCounter;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.slf4j.Logger;
@@ -37,8 +36,6 @@ public class TradeSingleSink extends RichSinkFunction<ResultEventHolder> {
 
     private static long candleRateLimitMillis;
 
-    private long delay;
-
     private Counter tradeSink;
 
     public TradeSingleSink(String type) {
@@ -57,7 +54,6 @@ public class TradeSingleSink extends RichSinkFunction<ResultEventHolder> {
         if ("mqtt".equals(type)) {
             quoteOperator = new MqttWriter(mapConf);
         }
-        Gauge<Long> tradeDelayGauge = getRuntimeContext().getMetricGroup().gauge("tradeDelay", () -> delay);
         tradeSink = getRuntimeContext().getMetricGroup().counter("tradeSink");
     }
 
@@ -65,7 +61,6 @@ public class TradeSingleSink extends RichSinkFunction<ResultEventHolder> {
     public void invoke(ResultEventHolder value, Context context) {
         quoteOperator.updateTrade(value.getTrade(), value.getContractId());
         long startingTimestamp = System.currentTimeMillis();
-        delay = startingTimestamp - value.getTrade().getTime();
         if ("redis".equals(type) && startingTimestamp
                 - contractCandleTimeMap.getOrDefault(value.getContractId(), 0L) >= candleRateLimitMillis) {
             for (int resolution : resolutions) {

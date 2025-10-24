@@ -26,7 +26,7 @@ public final class FlinkUtils {
             final String checkpointDir = parameterTool.get("checkpoint.dir");
             final int checkpointInterval = Integer.parseInt(parameterTool.get("checkpoint.interval"));
             see.enableCheckpointing(checkpointInterval);
-            see.getCheckpointConfig().enableExternalizedCheckpoints(
+            see.getCheckpointConfig().setExternalizedCheckpointCleanup(
                     CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION);
             see.getCheckpointConfig().setCheckpointStorage(checkpointDir);
             see.getCheckpointConfig().enableUnalignedCheckpoints();

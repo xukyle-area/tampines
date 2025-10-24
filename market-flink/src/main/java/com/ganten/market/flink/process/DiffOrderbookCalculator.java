@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.apache.flink.util.Collector;
@@ -23,11 +22,7 @@ public class DiffOrderbookCalculator extends ProcessFunction<List<ResultEventHol
 
     private static final Logger logger = LoggerFactory.getLogger(DiffOrderbookCalculator.class);
 
-    private final Map<String, String> parameterTool;
-
-    public DiffOrderbookCalculator(Map<String, String> parameterTool) {
-        this.parameterTool = parameterTool;
-    }
+    public DiffOrderbookCalculator() {}
 
     @Override
     public void open(Configuration parameters) throws Exception {

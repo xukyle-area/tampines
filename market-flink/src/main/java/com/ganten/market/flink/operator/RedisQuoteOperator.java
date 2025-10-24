@@ -29,9 +29,9 @@ public class RedisQuoteOperator implements QuoteOperator {
     private static final String QUOTE_PREFIX = "quote";
     private static final String QUOTE24_PREFIX = "quote24h";
     private static final String SEPARATOR = "_";
-    private static final long CACHE_MIN_TIME = 1641830400000L; // 2022.01.01
+    private static final long CACHE_MIN_TIME = 1641830400000L;
     private static final int CACHE_POINTS_NUM = 1502;
-    private static final long TRADE_CACHE_TIME = 2 * 24 * 60 * 60 * 1000 + 10 * 60 * 1000; // 2 day + 10 min
+    private static final long TRADE_CACHE_TIME = 2 * 24 * 60 * 60 * 1000 + 10 * 60 * 1000;
 
     private static final long SEC_24H = 24 * 60 * 60;
 
