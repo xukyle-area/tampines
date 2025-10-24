@@ -54,8 +54,8 @@ public class QuoteHealthyTask {
         for (Contract contract : Contract.values()) {
 
             Map<Market, BigDecimal> priceMap = QuoteHealthyTask.getPriceMap(contract.getId());
-            if (!priceMap.containsKey(Market.EXODUS) || priceMap.size() < 2) {
-                log.info("Skip calculating std for contract {}, missing EXODUS market data", contract.getSymbol());
+            if (!priceMap.containsKey(Market.GANTEN) || priceMap.size() < 2) {
+                log.info("Skip calculating std for contract {}, missing GANTEN market data", contract.getSymbol());
                 continue;
             }
             BigDecimal std = QuoteHealthyTask.calculateStd(priceMap);

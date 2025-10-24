@@ -49,7 +49,7 @@ public class DiffOrderbookCalculator extends ProcessFunction<List<ResultEventHol
             logger.debug("difforderbook element [{}]", element);
             OrderBook orderBook = element.getOrderBook();
             // divide DIFFORDERBOOKALL element
-            if (element.getResult_event_type() == ResultEventType.RESULT_EVENT_TYPE_DIFFORDERBOOKALL) {
+            if (element.getResult_event_type() == ResultEventType.DIFFORDERBOOKALL) {
                 subDiffElements(out, contractId, tickSize, lotSize, subDiffElementList);
                 out.collect(buildDiffAllEvent(element, contractId, tickSize, lotSize));
                 subDiffElementsLastId = 0L;
@@ -80,7 +80,7 @@ public class DiffOrderbookCalculator extends ProcessFunction<List<ResultEventHol
         }
         DiffOrderbookEvent diffOrderbookEvent = new DiffOrderbookEvent();
         diffOrderbookEvent.setContractId(contractId);
-        diffOrderbookEvent.setEventType(ResultEventType.RESULT_EVENT_TYPE_DIFFORDERBOOK);
+        diffOrderbookEvent.setEventType(ResultEventType.DIFFORDERBOOK);
         for (int i = 0; i < subDiffElementList.size(); i++) {
             OrderBook orderBook = subDiffElementList.get(i).getOrderBook();
             if (i == 0) {
@@ -112,7 +112,7 @@ public class DiffOrderbookCalculator extends ProcessFunction<List<ResultEventHol
             int lotSize) {
         DiffOrderbookEvent diffOrderbookEvent = new DiffOrderbookEvent();
         diffOrderbookEvent.setContractId(contractId);
-        diffOrderbookEvent.setEventType(ResultEventType.RESULT_EVENT_TYPE_DIFFORDERBOOKALL);
+        diffOrderbookEvent.setEventType(ResultEventType.DIFFORDERBOOKALL);
         OrderBook orderBook = diffElement.getOrderBook();
         diffOrderbookEvent.setUpdateId(orderBook.getUpdateId());
         for (OrderBookTuple tuple : orderBook.getAsks()) {

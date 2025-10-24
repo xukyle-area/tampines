@@ -100,7 +100,7 @@ public class RedisQuoteOperator implements QuoteOperator {
             return;
         }
         final String key = RedisUtils.generateDiffOrderBookKey(contractId, market);
-        if (event.getEventType() == ResultEventType.RESULT_EVENT_TYPE_DIFFORDERBOOKALL) {
+        if (event.getEventType() == ResultEventType.DIFFORDERBOOKALL) {
             Map<String, String> originMap = jedis.hgetAll(key);
             Result result = reconcile(originMap, event);
             if (result.isDiff()) {
@@ -194,7 +194,7 @@ public class RedisQuoteOperator implements QuoteOperator {
 
     private boolean checkUpdateId(DiffOrderbookEvent event) {
         Long contractId = event.getContractId();
-        if (event.getEventType() == ResultEventType.RESULT_EVENT_TYPE_DIFFORDERBOOKALL) {
+        if (event.getEventType() == ResultEventType.DIFFORDERBOOKALL) {
             return event.getUpdateId() >= localId.getOrDefault(contractId, 1L);
         }
         return event.getFirstId() <= localId.getOrDefault(contractId, 1L) + 1

@@ -35,9 +35,8 @@ public final class TickIndexerJob {
                 .setParallelism(Integer.parseInt(parameterTool.get("kafka.parallelism")))
                 .keyBy(ResultEventHolder::getContractId)
                 .window(TumblingProcessingTimeWindows.of(Time.milliseconds(windowSizeMillis)))
-                .process(new DeDuplicator())
-                .filter(t -> t.getResult_event_type() == ResultEventType.RESULT_EVENT_TYPE_TICK)
-                .addSink(new TickSink(Market.EXODUS)).name("tickSink").uid("tickSink");
+                .process(new DeDuplicator()).filter(t -> t.getResult_event_type() == ResultEventType.TICK)
+                .addSink(new TickSink(Market.GANTEN)).name("tickSink").uid("tickSink");
 
         see.execute(parameterTool.get("job.name"));
     }

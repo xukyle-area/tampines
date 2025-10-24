@@ -30,10 +30,10 @@ public class MqttWriter implements QuoteOperator {
     private static final Logger log = LoggerFactory.getLogger(MqttWriter.class);
 
     private static final String TOPIC = "api";
-    private static final String TICK_TOPIC = "api/exodus/quote/%s/tick";
-    private static final String TRADE_TOPIC = "api/exodus/quote/%s/trade";
-    private static final String ORDER_BOOK_TOPIC = "api/exodus/quote/%s/orderBook/?&grouping=%s";
-    private static final String CANDLE_TOPIC = "api/exodus/quote/%s/candle/?resolution=%s";
+    private static final String TICK_TOPIC = "quote/%s/tick";
+    private static final String TRADE_TOPIC = "quote/%s/trade";
+    private static final String ORDER_BOOK_TOPIC = "quote/%s/orderBook/?&grouping=%s";
+    private static final String CANDLE_TOPIC = "quote/%s/candle/?resolution=%s";
     private static String diffOrderBookKafkaTopic;
 
     private final Producer<String, String> producer;
@@ -119,7 +119,7 @@ public class MqttWriter implements QuoteOperator {
 
     @Override
     public void updateDiffOrderBook(DiffOrderbookEvent event, Market market) {
-        if (event.getEventType() == ResultEventType.RESULT_EVENT_TYPE_DIFFORDERBOOKALL) {
+        if (event.getEventType() == ResultEventType.DIFFORDERBOOKALL) {
             return;
         }
         if (!checkUpdateId(event)) {

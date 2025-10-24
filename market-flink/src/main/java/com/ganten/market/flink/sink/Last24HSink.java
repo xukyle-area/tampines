@@ -8,6 +8,6 @@ public class Last24HSink extends AbstractSink<Tuple2<Long, Last24HData>> {
 
     @Override
     public void invoke(Tuple2<Long, Last24HData> value, Context context) {
-        writers.update24HQuote(value.f1, Market.EXODUS, value.f0);
+        writers.update24HQuote(value.f1, Market.GANTEN, value.f0);
     }
 }

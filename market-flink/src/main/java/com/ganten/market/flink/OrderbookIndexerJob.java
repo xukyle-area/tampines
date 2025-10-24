@@ -30,9 +30,8 @@ public class OrderbookIndexerJob {
         final long windowSizeMillis = Long.parseLong(parameterTool.get("window.size.millis", "1000"));
         see.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source").keyBy(ResultEventHolder::getContractId)
                 .window(TumblingProcessingTimeWindows.of(Time.milliseconds(windowSizeMillis)))
-                .process(new DeDuplicator())
-                .filter(t -> t.getResult_event_type() == ResultEventType.RESULT_EVENT_TYPE_ORDERBOOK)
-                .addSink(new OrderBookSink(Market.EXODUS)).name("orderBookSink").uid("orderBookSink")
+                .process(new DeDuplicator()).filter(t -> t.getResult_event_type() == ResultEventType.ORDERBOOK)
+                .addSink(new OrderBookSink(Market.GANTEN)).name("orderBookSink").uid("orderBookSink")
                 .setParallelism(parameterTool.getInt("process.parallelism"));
         see.execute(parameterTool.get("job.name"));
     }
