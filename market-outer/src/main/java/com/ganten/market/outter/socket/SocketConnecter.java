@@ -1,0 +1,57 @@
+package com.ganten.market.outter.socket;
+
+import java.net.URISyntaxException;
+import com.ganten.market.common.pojo.Market;
+import com.ganten.market.outter.socket.binance.BinanceSocketClient;
+import com.ganten.market.outter.socket.cryptocom.CryptoSocketClient;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+public class SocketConnecter {
+    private BaseSocketClient curClient = null;
+    private final Market market;
+
+    public SocketConnecter(Market market) {
+        this.market = market;
+    }
+
+    public void checkAndSubscribe() {
+        log.info("Checking websocket connection for market: {}", market);
+        if (curClient == null || !curClient.isOpen()) {
+            log.info("websocket of {} is not open, try to reconnect", market);
+            reconnect();
+        }
+        if (curClient == null || !curClient.isOpen()) {
+            log.error("websocket of {} is still not open after reconnecting", market);
+            return;
+        }
+        curClient.subscribe();
+    }
+
+    public synchronized void reconnect() {
+        BaseSocketClient nextClient;
+        try {
+            if (market.equals(Market.BINANCE)) {
+                nextClient = new BinanceSocketClient();
+            } else if (market.equals(Market.CRYPTO_COM)) {
+                nextClient = new CryptoSocketClient();
+            } else {
+                log.error("Unsupported QuoteEnum type: {}", market);
+                return;
+            }
+        } catch (URISyntaxException e) {
+            log.error("URL format is invalid!", e);
+            return;
+        }
+        log.info("build websocket client success, websocket of {}", market);
+        try {
+            if (curClient != null) {
+                curClient.close();
+            }
+            nextClient.connect();
+            curClient = nextClient;
+        } catch (Exception e) {
+            log.error("Error reconnecting: {}", e.getMessage(), e);
+        }
+    }
+}
