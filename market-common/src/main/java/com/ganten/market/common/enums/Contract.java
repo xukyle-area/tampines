@@ -9,11 +9,9 @@ import lombok.Getter;
 
 @Getter
 public enum Contract {
-    BTC_USD(1L, "BTC", "USD", "BTC/USD", "0.01", "1"),
-    ETH_USD(2L, "ETH", "USD", "ETH/USD", "0.01", "1"),
-    LTC_USD(3L,"LTC", "USD", "LTC/USD", "0.01","1"),
-    XRP_USD(4L, "XRP", "USD", "XRP/USD", "0.01", "1"),
-    BCH_USD(5L, "BCH", "USD", "BCH/USD", "0.01", "1");
+    BTC_USD(1L, "BTC", "USDT", "BTCUSDT", "0.01", "1"),
+    ETH_USD(2L, "ETH", "USDT", "ETHUSDT", "0.01", "1"),
+    USDT_USD(3L, "USDT", "USD", "USDTUSD", "0.0001", "1");
 
     private Long id;
     private String base;

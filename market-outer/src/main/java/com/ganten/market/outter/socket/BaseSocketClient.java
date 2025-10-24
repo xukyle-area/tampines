@@ -28,6 +28,7 @@ public abstract class BaseSocketClient extends WebSocketClient {
     @Override
     public void onOpen(ServerHandshake data) {
         log.info("[{}] WebSocket 连接已打开!", market);
+        this.subscribe();
     }
 
     @Override

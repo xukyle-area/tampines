@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
-import com.ganten.market.common.constants.Constants;
 import com.ganten.market.common.enums.Contract;
 import com.ganten.market.common.model.RealTimeQuote;
 import com.ganten.market.common.pojo.Market;
@@ -15,8 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class BinanceSocketClient extends BaseSocketClient {
-
-    private final static String BINANCE_URL = "wss://proxy-binance-stream.yax.tech/stream";
+    private final static String SUBSCRIBE = "SUBSCRIBE";
+    private final static String BINANCE_URL = "wss://stream.binance.com:443";
 
     private long id;
 
@@ -33,12 +32,12 @@ public class BinanceSocketClient extends BaseSocketClient {
                 BinanceEvent binanceEvent = JsonUtils.fromJson(text, BinanceEvent.class);
                 BinanceTicker data = binanceEvent.getData();
                 String symbol = data.getSymbol();
-                Long contractId = Contract.getContractIdBySymbol(symbol);
-                if (Objects.isNull(contractId)) {
+                Contract contract = Contract.getContractBySymbol(symbol);
+                if (Objects.isNull(contract)) {
                     log.error("Can not find contractId for symbol:{}", symbol);
                     return;
                 }
-                RealTimeQuote realTimeQuote = new RealTimeQuote(data.getEventTime(), contractId, Market.BINANCE,
+                RealTimeQuote realTimeQuote = new RealTimeQuote(data.getEventTime(), contract, Market.BINANCE,
                         data.getLastTradedPrice(), data.getBestAskPrice(), data.getBestBidPrice());
                 log.info("sinking tick to redis.{}", realTimeQuote);
                 redisWriter.updateRealTimeQuote(realTimeQuote);
@@ -56,7 +55,9 @@ public class BinanceSocketClient extends BaseSocketClient {
             String x = symbol.toUpperCase() + "@ticker";
             params.add(x.toLowerCase());
         }
-        BinanceRequest request = new BinanceRequest(Constants.BINANCE_SUBSCRIBE, params.toArray(new String[0]), id++);
+        BinanceRequest request = new BinanceRequest(SUBSCRIBE, params.toArray(new String[0]), id++);
         return JsonUtils.toJson(request);
     }
 }
+
+

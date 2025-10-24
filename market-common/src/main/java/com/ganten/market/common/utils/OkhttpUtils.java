@@ -27,13 +27,4 @@ public class OkhttpUtils {
             throw new RuntimeException("http get method exception, url: " + url, e);
         }
     }
-
-    public static <T> T getBody(String url, TypeToken<T> typeToken) {
-        try {
-            final String body = get(url).string();
-            return JsonUtils.fromJson(body, typeToken.getType());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 }

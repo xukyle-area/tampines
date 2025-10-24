@@ -7,10 +7,9 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.flink.metrics.Counter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.ganten.market.common.RedisUtils;
+import com.ganten.market.common.KeyGenerator;
 import com.ganten.market.common.model.OrderBookData;
 import com.ganten.market.common.pojo.*;
 import com.ganten.market.flink.model.DiffOrderbookEvent;
@@ -39,16 +38,14 @@ public class RedisQuoteOperator implements QuoteOperator {
 
     private final Map<Long, Long> localId = new ConcurrentHashMap<>();
 
-    private final transient Counter errorCounter;
 
-    public RedisQuoteOperator(Map<String, String> parameterTool, Counter errorCounter) {
+    public RedisQuoteOperator(Map<String, String> parameterTool) {
         final String redisHosts = parameterTool.get("redis.hosts");
         final Set<HostAndPort> jedisClusterNodes = new HashSet<>();
         for (String redisHost : redisHosts.split(",")) {
             jedisClusterNodes.add(HostAndPort.from(redisHost));
         }
         this.jedis = new JedisCluster(jedisClusterNodes);
-        this.errorCounter = errorCounter;
     }
 
     @Override
@@ -85,8 +82,8 @@ public class RedisQuoteOperator implements QuoteOperator {
 
     @Override
     public void updateOrderBook(OrderBook orderBook, Market market, long contractId) {
-        final String askKey = RedisUtils.generateOrderBookAskKey(contractId, market);
-        final String bidKey = RedisUtils.generateOrderBookBidKey(contractId, market);
+        final String askKey = KeyGenerator.generateOrderBookAskKey(contractId, market);
+        final String bidKey = KeyGenerator.generateOrderBookBidKey(contractId, market);
 
         save2Redis(askKey, orderBook.getAsks());
         save2Redis(bidKey, orderBook.getBids());
@@ -99,7 +96,7 @@ public class RedisQuoteOperator implements QuoteOperator {
             log.error("redis id error, {}", event);
             return;
         }
-        final String key = RedisUtils.generateDiffOrderBookKey(contractId, market);
+        final String key = KeyGenerator.generateDiffOrderBookKey(contractId, market);
         if (event.getEventType() == ResultEventType.DIFFORDERBOOKALL) {
             Map<String, String> originMap = jedis.hgetAll(key);
             Result result = reconcile(originMap, event);
@@ -108,7 +105,6 @@ public class RedisQuoteOperator implements QuoteOperator {
                         .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getNewValue()));
                 jedis.hset(key, updateMap);
                 log.error("update diff orderbook all.diffs : {}", result.getDiffs());
-                errorCounter.inc();
             }
             List<String> deleteKeys = buildDeleteOrderBookKeys(originMap, result.getDiffs());
             if (!deleteKeys.isEmpty()) {
@@ -117,11 +113,11 @@ public class RedisQuoteOperator implements QuoteOperator {
             localId.put(contractId, event.getUpdateId());
         } else {
             Map<String, String> newMap = new HashMap<>();
-            event.getAskMap()
-                    .forEach((price, ob) -> newMap.put(RedisUtils.DIFF_ASK_FIELD + price, ob.getQuantity().toString()));
-            event.getBidMap()
-                    .forEach((price, ob) -> newMap.put(RedisUtils.DIFF_BID_FIELD + price, ob.getQuantity().toString()));
-            newMap.put(RedisUtils.UPDATE_ID, event.getLastId() + "");
+            event.getAskMap().forEach(
+                    (price, ob) -> newMap.put(KeyGenerator.DIFF_ASK_FIELD + price, ob.getQuantity().toString()));
+            event.getBidMap().forEach(
+                    (price, ob) -> newMap.put(KeyGenerator.DIFF_BID_FIELD + price, ob.getQuantity().toString()));
+            newMap.put(KeyGenerator.UPDATE_ID, event.getLastId() + "");
             jedis.hset(key, newMap);
             localId.put(contractId, event.getLastId());
         }
@@ -140,15 +136,14 @@ public class RedisQuoteOperator implements QuoteOperator {
 
     private Result reconcile(Map<String, String> originMap, DiffOrderbookEvent event) {
         Map<String, Result.Pair> diffs = new HashMap<>();
-        if (!originMap.containsKey(RedisUtils.UPDATE_ID)
-                || !originMap.get(RedisUtils.UPDATE_ID).equals(event.getUpdateId() + "")) {
+        if (!originMap.containsKey(KeyGenerator.UPDATE_ID)
+                || !originMap.get(KeyGenerator.UPDATE_ID).equals(event.getUpdateId() + "")) {
             log.error("diff orderbook id error.{}", event.getUpdateId());
-            errorCounter.inc();
-            diffs.put(RedisUtils.UPDATE_ID,
-                    new Result.Pair(originMap.get(RedisUtils.UPDATE_ID), event.getUpdateId().toString()));
+            diffs.put(KeyGenerator.UPDATE_ID,
+                    new Result.Pair(originMap.get(KeyGenerator.UPDATE_ID), event.getUpdateId().toString()));
         }
-        diffs.putAll(reconcileOrderBook(RedisUtils.DIFF_ASK_FIELD, originMap, event.getAskMap()));
-        diffs.putAll(reconcileOrderBook(RedisUtils.DIFF_BID_FIELD, originMap, event.getBidMap()));
+        diffs.putAll(reconcileOrderBook(KeyGenerator.DIFF_ASK_FIELD, originMap, event.getAskMap()));
+        diffs.putAll(reconcileOrderBook(KeyGenerator.DIFF_BID_FIELD, originMap, event.getBidMap()));
         return new Result(diffs);
     }
 
@@ -230,7 +225,7 @@ public class RedisQuoteOperator implements QuoteOperator {
 
     @Override
     public void updateCandle(CandleData candleData, long contractId, int resolution) {
-        byte[] key = RedisUtils.generateCandleCacheKey(contractId, resolution).getBytes(StandardCharsets.UTF_8);
+        byte[] key = KeyGenerator.generateCandleCacheKey(contractId, resolution).getBytes(StandardCharsets.UTF_8);
         double startTime = Double.parseDouble(candleData.getStartTime());
         jedis.zadd(key, startTime, candleData.toByteArray());
         jedis.zremrangeByScore(key, CACHE_MIN_TIME, startTime - resolution * 1000L * CACHE_POINTS_NUM);
@@ -238,14 +233,14 @@ public class RedisQuoteOperator implements QuoteOperator {
 
     @Override
     public void updateTrade(TradeInfo tradeInfo, long contractId) {
-        byte[] key = RedisUtils.generateTradeCacheKey(contractId).getBytes(StandardCharsets.UTF_8);
+        byte[] key = KeyGenerator.generateTradeCacheKey(contractId).getBytes(StandardCharsets.UTF_8);
         jedis.zadd(key, tradeInfo.getTime(), tradeInfo.toByteArray());
         jedis.zremrangeByScore(key, CACHE_MIN_TIME, System.currentTimeMillis() - TRADE_CACHE_TIME);
     }
 
     @Override
     public List<TradeInfo> getTrade(long contractId, long startTime, long endTime) {
-        byte[] key = RedisUtils.generateTradeCacheKey(contractId).getBytes(StandardCharsets.UTF_8);
+        byte[] key = KeyGenerator.generateTradeCacheKey(contractId).getBytes(StandardCharsets.UTF_8);
         List<TradeInfo> trades = new ArrayList<>();
         for (byte[] trade : jedis.zrangeByScore(key, startTime, endTime)) {
             trades.add(TradeInfo.parseFrom(trade));

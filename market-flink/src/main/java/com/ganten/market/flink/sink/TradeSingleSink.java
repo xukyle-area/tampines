@@ -46,8 +46,7 @@ public class TradeSingleSink extends RichSinkFunction<ResultEventHolder> {
     public void open(Configuration parameters) {
         Map<String, String> mapConf = getRuntimeContext().getExecutionConfig().getGlobalJobParameters().toMap();
         if ("redis".equals(type)) {
-            quoteOperator = new RedisQuoteOperator(mapConf,
-                    getRuntimeContext().getMetricGroup().counter("tradeRedisErrorCounter", new SimpleCounter()));
+            quoteOperator = new RedisQuoteOperator(mapConf);
             candleWriter = new MqttWriter(mapConf);
             candleRateLimitMillis = Long.parseLong(mapConf.getOrDefault("tempcandle.ratelimit.millis", "500"));
         }

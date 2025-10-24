@@ -1,7 +1,10 @@
 package com.ganten.market.outter.socket.cryptocom;
 
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import com.ganten.market.common.constants.Constants;
 import com.ganten.market.common.enums.Contract;
@@ -43,17 +46,13 @@ public class CryptoSocketClient extends BaseSocketClient {
                 CryptoEvent cryptoEvent = JsonUtils.fromJson(text, CryptoEvent.class);
                 CryptoEvent.Dat data = cryptoEvent.getResult().getData()[0];
                 String symbol = cryptoEvent.getResult().getSubscription();
-                Long contractId = Contract.getContractIdBySymbol(symbol.split("ticker.")[1].replace("_", ""));
-                if (Objects.isNull(contractId)) {
-                    log.error("Can not find contractId for symbol:{}", symbol);
-                    return;
-                }
-                RealTimeQuote realTimeQuote = new RealTimeQuote(System.currentTimeMillis(), contractId,
-                        Market.CRYPTO_COM, data.getLast(), data.getAsk(), data.getBid());
+                Contract contract = Contract.getContractBySymbol(symbol.split("ticker.")[1].replace("_", ""));
+                RealTimeQuote realTimeQuote = new RealTimeQuote(System.currentTimeMillis(), contract, Market.CRYPTO_COM,
+                        data.getLast(), data.getAsk(), data.getBid());
                 log.info("sinking tick to redis.{}", realTimeQuote);
                 redisWriter.updateRealTimeQuote(realTimeQuote);
             } catch (Exception e) {
-                log.error("error during sink.{}", text, e);
+                log.error("error during sink.{}", text);
             }
         };
     }

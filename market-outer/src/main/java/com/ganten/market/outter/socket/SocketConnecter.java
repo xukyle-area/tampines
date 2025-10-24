@@ -13,6 +13,7 @@ public class SocketConnecter {
 
     public SocketConnecter(Market market) {
         this.market = market;
+        this.checkAndSubscribe();
     }
 
     public void checkAndSubscribe() {

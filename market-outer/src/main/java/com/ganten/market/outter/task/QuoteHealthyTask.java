@@ -9,7 +9,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import com.ganten.market.common.RedisUtils;
+import com.ganten.market.common.KeyGenerator;
 import com.ganten.market.common.enums.Contract;
 import com.ganten.market.common.pojo.Market;
 import com.ganten.market.outter.writer.RedisQuoteWriter;
@@ -19,7 +19,6 @@ import redis.clients.jedis.commands.JedisCommands;
 @Slf4j
 @Service
 public class QuoteHealthyTask {
-    private final static double stdThreshold = 0.1;
     private static JedisCommands jedis;
 
     private static String redisNodes;
@@ -46,7 +45,7 @@ public class QuoteHealthyTask {
         }
     }
 
-    @Scheduled(fixedRate = 1000)
+    @Scheduled(fixedRate = 30000)
     public void run() {
         QuoteHealthyTask.calculateAllContract();
     }
@@ -54,7 +53,8 @@ public class QuoteHealthyTask {
     private static void calculateAllContract() {
         for (Contract contract : Contract.values()) {
 
-            Map<Market, BigDecimal> priceMap = QuoteHealthyTask.getPriceMap(contract.getId());
+            Map<Market, BigDecimal> priceMap = QuoteHealthyTask.getPriceMap(contract);
+            log.info("Contract {} price map : {}", contract.getSymbol(), priceMap);
             if (priceMap.size() < 2) {
                 continue;
             }
@@ -69,12 +69,12 @@ public class QuoteHealthyTask {
      * @param contractId 合约 id
      * @return 各市场的最新价格映射
      */
-    private static Map<Market, BigDecimal> getPriceMap(long contractId) {
+    private static Map<Market, BigDecimal> getPriceMap(Contract contract) {
         Map<Market, BigDecimal> priceMap = new HashMap<>();
 
         // 获取市场价格并记录失败市场
         for (Market market : Market.values()) {
-            String key = RedisUtils.generateRedisQuoteKey(contractId, market);
+            String key = KeyGenerator.realtimeKey(contract, market);
             String lastStr = jedis.hget(key, "last");
             if (StringUtils.isBlank(lastStr)) {
                 continue;

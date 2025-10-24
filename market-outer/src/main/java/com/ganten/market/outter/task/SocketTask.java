@@ -10,11 +10,11 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class SocketTask {
 
-    // @Scheduled(fixedDelay = 30000, initialDelay = 10000)
-    // public void binance() {
-    // SocketConnecter binanceConnecter = new SocketConnecter(Market.BINANCE);
-    // binanceConnecter.checkAndSubscribe();
-    // }
+    @Scheduled(fixedDelay = 90000, initialDelay = 10000)
+    public void binance() {
+        SocketConnecter binanceConnecter = new SocketConnecter(Market.BINANCE);
+        binanceConnecter.checkAndSubscribe();
+    }
 
     @Scheduled(fixedDelay = 90000, initialDelay = 10000)
     public void cryptoCom() {

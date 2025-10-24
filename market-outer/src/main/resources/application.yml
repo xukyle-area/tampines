@@ -4,4 +4,4 @@ app:
   redis:
     cluster:
       nodes: localhost:6379
-      password: "redispassword"
+      password: redispassword
