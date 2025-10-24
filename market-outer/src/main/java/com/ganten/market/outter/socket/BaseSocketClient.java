@@ -9,14 +9,10 @@ import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import com.ganten.market.common.enums.Contract;
 import com.ganten.market.common.pojo.Market;
-import com.ganten.market.outter.writer.QuoteWriter;
-import com.ganten.market.outter.writer.RedisQuoteWriter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public abstract class BaseSocketClient extends WebSocketClient {
-
-    protected static final QuoteWriter redisWriter = RedisQuoteWriter.of("localhost:6379", "redispassword");
 
     private final Market market;
 

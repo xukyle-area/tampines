@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.Map;
-import javax.annotation.PostConstruct;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -12,14 +11,13 @@ import org.springframework.stereotype.Service;
 import com.ganten.market.common.KeyGenerator;
 import com.ganten.market.common.enums.Contract;
 import com.ganten.market.common.pojo.Market;
-import com.ganten.market.outter.writer.RedisQuoteWriter;
+import com.ganten.market.common.redis.RedisClient;
 import lombok.extern.slf4j.Slf4j;
-import redis.clients.jedis.commands.JedisCommands;
+import redis.clients.jedis.Jedis;
 
 @Slf4j
 @Service
 public class QuoteHealthyTask {
-    private static JedisCommands jedis;
 
     private static String redisNodes;
     private static String redisPassword;
@@ -36,13 +34,6 @@ public class QuoteHealthyTask {
 
     static {
         // 初始化将在Spring上下文加载后通过setter设置
-    }
-
-    @PostConstruct
-    public void init() {
-        if (jedis == null) {
-            jedis = RedisQuoteWriter.getJedis(redisNodes, redisPassword);
-        }
     }
 
     @Scheduled(fixedRate = 30000)
@@ -73,14 +64,16 @@ public class QuoteHealthyTask {
         Map<Market, BigDecimal> priceMap = new HashMap<>();
 
         // 获取市场价格并记录失败市场
-        for (Market market : Market.values()) {
-            String key = KeyGenerator.realtimeKey(contract, market);
-            String lastStr = jedis.hget(key, "last");
-            if (StringUtils.isBlank(lastStr)) {
-                continue;
+        try (Jedis jedis = RedisClient.getResource()) {
+            for (Market market : Market.values()) {
+                String key = KeyGenerator.realtimeKey(contract, market);
+                String lastStr = jedis.hget(key, "last");
+                if (StringUtils.isBlank(lastStr)) {
+                    continue;
+                }
+                BigDecimal last = new BigDecimal(lastStr);
+                priceMap.put(market, last);
             }
-            BigDecimal last = new BigDecimal(lastStr);
-            priceMap.put(market, last);
         }
         return priceMap;
     }

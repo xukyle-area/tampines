@@ -12,6 +12,7 @@ import com.ganten.market.common.model.RealTimeQuote;
 import com.ganten.market.common.pojo.Market;
 import com.ganten.market.common.utils.JsonUtils;
 import com.ganten.market.outter.socket.BaseSocketClient;
+import com.ganten.market.outter.writer.RedisQuoteWriter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -50,7 +51,7 @@ public class CryptoSocketClient extends BaseSocketClient {
                 RealTimeQuote realTimeQuote = new RealTimeQuote(System.currentTimeMillis(), contract, Market.CRYPTO_COM,
                         data.getLast(), data.getAsk(), data.getBid());
                 log.info("sinking tick to redis.{}", realTimeQuote);
-                redisWriter.updateRealTimeQuote(realTimeQuote);
+                RedisQuoteWriter.updateRealTimeQuote(realTimeQuote);
             } catch (Exception e) {
                 log.error("error during sink.{}", text);
             }

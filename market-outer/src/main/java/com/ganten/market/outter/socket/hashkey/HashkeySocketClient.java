@@ -9,6 +9,7 @@ import com.ganten.market.common.model.RealTimeQuote;
 import com.ganten.market.common.pojo.Market;
 import com.ganten.market.common.utils.JsonUtils;
 import com.ganten.market.outter.socket.BaseSocketClient;
+import com.ganten.market.outter.writer.RedisQuoteWriter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -60,7 +61,7 @@ public class HashkeySocketClient extends BaseSocketClient {
                 RealTimeQuote realTimeQuote = new RealTimeQuote(System.currentTimeMillis(), contract, Market.HASHKEY,
                         data.getClose(), null, null);
                 log.info("Hashkey real-time: {}", realTimeQuote);
-                redisWriter.updateRealTimeQuote(realTimeQuote);
+                RedisQuoteWriter.updateRealTimeQuote(realTimeQuote);
             } catch (Exception e) {
                 log.error("error during sink.{}", text, e);
             }
