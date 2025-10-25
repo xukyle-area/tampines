@@ -23,8 +23,6 @@ public class TradeSingleSink extends RichSinkFunction<ResultEventHolder> {
 
     private Map<Long, Long> contractCandleTimeMap = new HashMap<>();
 
-    private static final int[] resolutions = {60, 300, 900, 3600, 21600, 86400};
-
     public TradeSingleSink(Map<String, String> parameterTool) {
         compositeWriter = new CompositeWriter(parameterTool);
     }
@@ -40,16 +38,6 @@ public class TradeSingleSink extends RichSinkFunction<ResultEventHolder> {
         compositeWriter.updateTrade(value.getTrade(), value.getContractId());
 
         long startingTimestamp = System.currentTimeMillis();
-        for (int resolution : resolutions) {
-            long startTime = value.getTimestamp() / (resolution * 1000L) * (resolution * 1000L);
-            List<TradeInfo> trades =
-                    quoteOperator.getTrade(value.getContractId(), startTime, startTime + resolution * 1000L);
-            if (trades == null || trades.isEmpty()) {
-                continue;
-            }
-            CandleData candleData = calculateCandleFromTrades(trades, startTime);
-            compositeWriter.getCandleWriter().updateCandle(candleData, value.getContractId(), resolution);
-        }
         long tempCandleTime = System.currentTimeMillis();
         contractCandleTimeMap.put(value.getContractId(), tempCandleTime);
         log.info("calculate temp candle cost ms : {}", tempCandleTime - startingTimestamp);

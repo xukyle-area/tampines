@@ -1,6 +1,10 @@
 package com.ganten.market.flink;
 
-import static com.ganten.market.common.constants.Constants.*;
+import static com.ganten.market.common.constants.Constants.ONE;
+import static com.ganten.market.common.constants.Constants.TRADE_DYNAMO_AGG;
+import static com.ganten.market.common.constants.Constants.TRADE_DYNAMO_SINK;
+import static com.ganten.market.common.constants.Constants.TRADE_REDIS_SINK;
+import java.util.HashMap;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.connector.kafka.source.KafkaSource;
@@ -33,15 +37,20 @@ public final class TradeJob {
                 see.fromSource(source, WatermarkStrategy.noWatermarks(), Constants.KAFKA_SOURCE).setParallelism(ONE);
         final KeyedStream<ResultEventHolder, Long> keyedStream = tradeStream.keyBy(ResultEventHolder::getContractId);
 
-        keyedStream.addSink(new TradeSingleSink(Constants.REDIS)).name(TRADE_REDIS_SINK).uid(TRADE_REDIS_SINK)
-                .setParallelism(ONE);
-        keyedStream.addSink(new TradeSingleSink(Constants.MQTT)).name(TRADE_MQTT_SINK).uid(TRADE_MQTT_SINK)
-                .setParallelism(ONE);
+        keyedStream.addSink(new TradeSingleSink(new HashMap<>()))
+            .name(TRADE_REDIS_SINK)
+            .uid(TRADE_REDIS_SINK)
+            .setParallelism(ONE);
 
-        keyedStream.window(TumblingProcessingTimeWindows.of(Time.seconds(ONE))).aggregate(new ResultEventAggregate())
-                .name(TRADE_DYNAMO_AGG).uid(TRADE_DYNAMO_AGG).addSink(new TradeBatchSink()).name(TRADE_DYNAMO_SINK)
-                .uid(TRADE_DYNAMO_SINK);
+        keyedStream.window(TumblingProcessingTimeWindows
+            .of(Time.seconds(ONE)))
+            .aggregate(new ResultEventAggregate())
+            .name(TRADE_DYNAMO_AGG)
+            .uid(TRADE_DYNAMO_AGG)
+            .addSink(new TradeBatchSink())
+            .name(TRADE_DYNAMO_SINK)
+            .uid(TRADE_DYNAMO_SINK);
 
-        see.execute(parameterTool.get("job.name"));
+        see.execute("trade_job");
     }
 }
