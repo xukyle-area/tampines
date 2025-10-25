@@ -7,76 +7,52 @@ import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.metrics.Counter;
-import org.apache.flink.metrics.SimpleCounter;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.ganten.market.common.pojo.CandleData;
 import com.ganten.market.common.pojo.ResultEventHolder;
 import com.ganten.market.common.pojo.TradeInfo;
-import com.ganten.market.flink.operator.MqttWriter;
-import com.ganten.market.flink.operator.QuoteOperator;
-import com.ganten.market.flink.operator.RedisQuoteOperator;
 import com.ganten.market.flink.utils.DecimalUtils;
+import com.ganten.market.flink.writer.CompositeWriter;
 
 public class TradeSingleSink extends RichSinkFunction<ResultEventHolder> {
-
     private static final Logger log = LoggerFactory.getLogger(TradeSingleSink.class);
 
-    private QuoteOperator quoteOperator;
-
-    private QuoteOperator candleWriter;
-
-    private String type;
+    private CompositeWriter compositeWriter;
 
     private Map<Long, Long> contractCandleTimeMap = new HashMap<>();
 
     private static final int[] resolutions = {60, 300, 900, 3600, 21600, 86400};
 
-    private static long candleRateLimitMillis;
-
-    private Counter tradeSink;
-
-    public TradeSingleSink(String type) {
-        this.type = type;
+    public TradeSingleSink(Map<String, String> parameterTool) {
+        compositeWriter = new CompositeWriter(parameterTool);
     }
 
     @Override
     public void open(Configuration parameters) {
         Map<String, String> mapConf = getRuntimeContext().getExecutionConfig().getGlobalJobParameters().toMap();
-        if ("redis".equals(type)) {
-            quoteOperator = new RedisQuoteOperator(mapConf);
-            candleWriter = new MqttWriter(mapConf);
-            candleRateLimitMillis = Long.parseLong(mapConf.getOrDefault("tempcandle.ratelimit.millis", "500"));
-        }
-        if ("mqtt".equals(type)) {
-            quoteOperator = new MqttWriter(mapConf);
-        }
-        tradeSink = getRuntimeContext().getMetricGroup().counter("tradeSink");
+        compositeWriter = new CompositeWriter(mapConf);
     }
 
     @Override
     public void invoke(ResultEventHolder value, Context context) {
-        quoteOperator.updateTrade(value.getTrade(), value.getContractId());
+        compositeWriter.updateTrade(value.getTrade(), value.getContractId());
+
         long startingTimestamp = System.currentTimeMillis();
-        if ("redis".equals(type) && startingTimestamp
-                - contractCandleTimeMap.getOrDefault(value.getContractId(), 0L) >= candleRateLimitMillis) {
-            for (int resolution : resolutions) {
-                long startTime = value.getTimestamp() / (resolution * 1000L) * (resolution * 1000L);
-                List<TradeInfo> trades =
-                        quoteOperator.getTrade(value.getContractId(), startTime, startTime + resolution * 1000L);
-                if (trades == null || trades.isEmpty()) {
-                    continue;
-                }
-                CandleData candleData = calculateCandleFromTrades(trades, startTime);
-                candleWriter.updateCandle(candleData, value.getContractId(), resolution);
+        for (int resolution : resolutions) {
+            long startTime = value.getTimestamp() / (resolution * 1000L) * (resolution * 1000L);
+            List<TradeInfo> trades =
+                    quoteOperator.getTrade(value.getContractId(), startTime, startTime + resolution * 1000L);
+            if (trades == null || trades.isEmpty()) {
+                continue;
             }
-            long tempCandleTime = System.currentTimeMillis();
-            contractCandleTimeMap.put(value.getContractId(), tempCandleTime);
-            log.info("calculate temp candle cost ms : {}", tempCandleTime - startingTimestamp);
+            CandleData candleData = calculateCandleFromTrades(trades, startTime);
+            compositeWriter.getCandleWriter().updateCandle(candleData, value.getContractId(), resolution);
         }
-        tradeSink.inc();
+        long tempCandleTime = System.currentTimeMillis();
+        contractCandleTimeMap.put(value.getContractId(), tempCandleTime);
+        log.info("calculate temp candle cost ms : {}", tempCandleTime - startingTimestamp);
     }
 
     @Nullable

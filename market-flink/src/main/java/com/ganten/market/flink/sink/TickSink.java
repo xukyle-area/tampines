@@ -37,7 +37,7 @@ public class TickSink extends AbstractSink<ResultEventHolder> {
                     e.getClass().getName(), e.getMessage()), e);
             errorCounter.inc();
         }
-        writers.updateQuote(value.getTick(), last24HPrice, market, value.getContractId());
+        compositeWriter.updateQuote(value.getTick(), last24HPrice, market, value.getContractId());
         healthyCounter.inc();
     }
 }

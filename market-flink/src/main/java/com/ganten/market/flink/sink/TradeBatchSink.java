@@ -4,12 +4,12 @@ import java.util.List;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import com.ganten.market.common.pojo.ResultEventHolder;
-import com.ganten.market.flink.operator.QuoteOperator;
+import com.ganten.market.flink.writer.BaseWriter;
 import com.google.common.collect.Lists;
 
 public class TradeBatchSink extends RichSinkFunction<List<ResultEventHolder>> {
 
-    private QuoteOperator quoteWriter;
+    private BaseWriter quoteWriter;
 
     private static final int batchSize = 25;
 

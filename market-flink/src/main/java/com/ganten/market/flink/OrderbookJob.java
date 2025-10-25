@@ -15,24 +15,21 @@ import com.ganten.market.flink.process.DeDuplicator;
 import com.ganten.market.flink.sink.OrderBookSink;
 import com.ganten.market.flink.utils.FlinkUtils;
 import com.ganten.market.flink.utils.KafkaSourceUtils;
-import com.twitter.chill.protobuf.ProtobufSerializer;
 
-public class OrderbookIndexerJob {
+public class OrderbookJob {
 
     public static void main(String[] args) throws Exception {
-        final ParameterTool parameterTool = ParameterTool
-                .fromPropertiesFile(OrderbookIndexerJob.class.getClassLoader().getResourceAsStream(args[0]));
-        final KafkaSource<ResultEventHolder> source = KafkaSourceUtils.ofParameterTool(parameterTool);
+        final ParameterTool parameterTool =
+                ParameterTool.fromPropertiesFile(OrderbookJob.class.getClassLoader().getResourceAsStream(args[0]));
+        final KafkaSource<ResultEventHolder> source = KafkaSourceUtils.fromParameterTool(parameterTool);
         final StreamExecutionEnvironment see = StreamExecutionEnvironment.getExecutionEnvironment().setParallelism(1);
-        FlinkUtils.configureStreamExecutionEnvironment(see, parameterTool);
-        see.getConfig().registerTypeWithKryoSerializer(ResultEventHolder.class, ProtobufSerializer.class);
+        FlinkUtils.configureSEE(see, parameterTool);
         see.setRestartStrategy(RestartStrategies.fixedDelayRestart(5, 5 * 1000));
         final long windowSizeMillis = Long.parseLong(parameterTool.get("window.size.millis", "1000"));
         see.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source").keyBy(ResultEventHolder::getContractId)
                 .window(TumblingProcessingTimeWindows.of(Time.milliseconds(windowSizeMillis)))
                 .process(new DeDuplicator()).filter(t -> t.getResult_event_type() == ResultEventType.ORDERBOOK)
-                .addSink(new OrderBookSink(Market.GANTEN)).name("orderBookSink").uid("orderBookSink")
-                .setParallelism(parameterTool.getInt("process.parallelism"));
+                .addSink(new OrderBookSink(Market.GANTEN)).name("orderBookSink").uid("orderBookSink").setParallelism(1);
         see.execute(parameterTool.get("job.name"));
     }
 

@@ -1,7 +1,2 @@
 server:
   port: 10808
-app:
-  redis:
-    cluster:
-      nodes: localhost:6379
-      password: redispassword

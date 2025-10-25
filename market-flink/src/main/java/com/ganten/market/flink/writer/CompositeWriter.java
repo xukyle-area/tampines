@@ -1,23 +1,28 @@
-package com.ganten.market.flink.operator;
+package com.ganten.market.flink.writer;
 
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.ganten.market.common.pojo.*;
-import com.ganten.market.flink.model.DiffOrderbookEvent;
 
-public class AllOperators implements QuoteOperator {
+public class CompositeWriter implements BaseWriter {
 
-    private static final Logger log = LoggerFactory.getLogger(AllOperators.class);
+    private static final Logger log = LoggerFactory.getLogger(CompositeWriter.class);
 
-    private final List<QuoteOperator> writers;
+    private final List<BaseWriter> writers;
 
-    public AllOperators(List<QuoteOperator> writers) {
-        if (writers == null || writers.isEmpty()) {
-            throw new RuntimeException("writers is empty");
-        }
-        this.writers = writers;
+    public CompositeWriter(Map<String, String> mapConf) {
+        MqttWriter mqttWriter = new MqttWriter(mapConf);
+        RedisWriter redisWriter = new RedisWriter(mapConf);
+        this.writers = Stream.of(mqttWriter, redisWriter).collect(Collectors.toList());
+    }
+
+    public void updateSingleTrade(TradeInfo tradeInfo, long contractId) {
+        write(w -> w.updateTrade(tradeInfo, contractId), "updateSingleTrade");
     }
 
     public void updateQuote(Tick tick, String last24HPrice, Market market, long contractId) {
@@ -28,14 +33,6 @@ public class AllOperators implements QuoteOperator {
         write(w -> w.updateOrderBook(orderBook, market, contractId), "updateOrderBook");
     }
 
-    public void updateDiffOrderBook(DiffOrderbookEvent event, Market market) {
-        write(w -> w.updateDiffOrderBook(event, market), "updateOrderBook");
-    }
-
-    public void update24HQuote(Last24HData data, Market market, long contractId) {
-        write(w -> w.update24HQuote(data, market, contractId), "update24HQuote");
-    }
-
     public void updateTrade(TradeInfo tradeInfo, long contractId) {
         write(w -> w.updateTrade(tradeInfo, contractId), "updateTrade");
     }
@@ -44,9 +41,9 @@ public class AllOperators implements QuoteOperator {
         write(w -> w.updateCandle(candleData, contractId, resolution), "updateCandle");
     }
 
-    private void write(Consumer<QuoteOperator> consumer, String name) {
+    private void write(Consumer<BaseWriter> consumer, String name) {
         long s = System.currentTimeMillis();
-        for (QuoteOperator w : writers) {
+        for (BaseWriter w : writers) {
             try {
                 consumer.accept(w);
             } catch (Exception e) {

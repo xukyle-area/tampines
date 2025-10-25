@@ -2,7 +2,6 @@ package com.ganten.market.common.utils;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
-import com.google.gson.reflect.TypeToken;
 import okhttp3.*;
 
 public class OkhttpUtils {

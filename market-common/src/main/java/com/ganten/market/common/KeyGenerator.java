@@ -12,7 +12,11 @@ public class KeyGenerator {
         return Joiner.on(SEPARATOR).join(REALTIME, contract.getBase(), contract.getQuote(), market.toString());
     }
 
+    private static final String CANDLE = "candle";
 
+    public static String candleKey(Contract contract, int resolution) {
+        return Joiner.on(SEPARATOR).join(CANDLE, contract.getBase(), contract.getQuote(), resolution);
+    }
 
     private static final String QUOTE24_PREFIX = "quote24h";
     private static final String ASK_PREFIX = "order_book_ask_2";

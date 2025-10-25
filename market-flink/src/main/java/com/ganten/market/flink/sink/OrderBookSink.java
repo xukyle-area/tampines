@@ -19,6 +19,6 @@ public class OrderBookSink extends AbstractSink<ResultEventHolder> {
 
     @Override
     public void invoke(ResultEventHolder value, Context context) {
-        writers.updateOrderBook(value.getOrderBook(), market, value.getContractId());
+        compositeWriter.updateOrderBook(value.getOrderBook(), market, value.getContractId());
     }
 }

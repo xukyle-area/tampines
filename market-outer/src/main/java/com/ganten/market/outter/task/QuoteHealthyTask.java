@@ -5,7 +5,6 @@ import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.commons.lang.StringUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import com.ganten.market.common.KeyGenerator;
@@ -18,19 +17,6 @@ import redis.clients.jedis.Jedis;
 @Slf4j
 @Service
 public class QuoteHealthyTask {
-
-    private static String redisNodes;
-    private static String redisPassword;
-
-    @Value("${app.redis.cluster.nodes:localhost:6379}")
-    public void setRedisNodes(String redisNodes) {
-        QuoteHealthyTask.redisNodes = redisNodes;
-    }
-
-    @Value("${app.redis.cluster.password:}")
-    public void setRedisPassword(String redisPassword) {
-        QuoteHealthyTask.redisPassword = redisPassword;
-    }
 
     static {
         // 初始化将在Spring上下文加载后通过setter设置

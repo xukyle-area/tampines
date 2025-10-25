@@ -10,7 +10,7 @@ import com.ganten.market.flink.serialization.ResultEventHolderDeserializer;
 
 public final class KafkaSourceUtils {
 
-    public static KafkaSource<ResultEventHolder> ofParameterTool(ParameterTool parameterTool)
+    public static KafkaSource<ResultEventHolder> fromParameterTool(ParameterTool parameterTool)
             throws NoSuchMethodException {
 
         final String bootStrapServers = parameterTool.get("kafka.bootstrap.servers");

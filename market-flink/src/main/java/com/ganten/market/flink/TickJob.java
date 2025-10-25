@@ -10,32 +10,30 @@ import org.apache.flink.streaming.api.windowing.time.Time;
 import com.ganten.market.common.pojo.Market;
 import com.ganten.market.common.pojo.ResultEventHolder;
 import com.ganten.market.common.pojo.ResultEventType;
-import com.ganten.market.flink.aggregate.ResultEventAggregate;
-import com.ganten.market.flink.process.DiffOrderbookCalculator;
-import com.ganten.market.flink.sink.DiffOrderBookSink;
+import com.ganten.market.flink.process.DeDuplicator;
+import com.ganten.market.flink.sink.TickSink;
 import com.ganten.market.flink.utils.FlinkUtils;
 import com.ganten.market.flink.utils.KafkaSourceUtils;
-import com.twitter.chill.protobuf.ProtobufSerializer;
 
-public class DiffOrderbookJob {
+public final class TickJob {
+
     public static void main(String[] args) throws Exception {
         final ParameterTool parameterTool =
-                ParameterTool.fromPropertiesFile(DiffOrderbookJob.class.getClassLoader().getResourceAsStream(args[0]));
-        final KafkaSource<ResultEventHolder> source = KafkaSourceUtils.ofParameterTool(parameterTool);
+                ParameterTool.fromPropertiesFile(TickJob.class.getClassLoader().getResourceAsStream(args[0]));
+        final KafkaSource<ResultEventHolder> source = KafkaSourceUtils.fromParameterTool(parameterTool);
+
         final StreamExecutionEnvironment see = StreamExecutionEnvironment.getExecutionEnvironment().setParallelism(1);
-        FlinkUtils.configureStreamExecutionEnvironment(see, parameterTool);
-        see.getConfig().registerTypeWithKryoSerializer(ResultEventHolder.class, ProtobufSerializer.class);
+        FlinkUtils.configureSEE(see, parameterTool);
+
         see.setRestartStrategy(RestartStrategies.fixedDelayRestart(5, 5 * 1000));
 
         final long windowSizeMillis = Long.parseLong(parameterTool.get("window.size.millis", "1000"));
         see.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source")
-                .filter(t -> t.getResult_event_type() == ResultEventType.DIFFORDERBOOK
-                        || t.getResult_event_type() == ResultEventType.DIFFORDERBOOKALL)
+                .setParallelism(Integer.parseInt(parameterTool.get("kafka.parallelism")))
                 .keyBy(ResultEventHolder::getContractId)
                 .window(TumblingProcessingTimeWindows.of(Time.milliseconds(windowSizeMillis)))
-                .aggregate(new ResultEventAggregate()).process(new DiffOrderbookCalculator())
-                .addSink(new DiffOrderBookSink(Market.GANTEN)).name("diffOrderBookSink").uid("diffOrderBookSink")
-                .setParallelism(parameterTool.getInt("process.parallelism"));
+                .process(new DeDuplicator()).filter(t -> t.getResult_event_type() == ResultEventType.TICK)
+                .addSink(new TickSink(Market.GANTEN)).name("tickSink").uid("tickSink");
 
         see.execute(parameterTool.get("job.name"));
     }

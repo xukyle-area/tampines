@@ -6,10 +6,10 @@ import org.slf4j.LoggerFactory;
 import com.ganten.market.common.pojo.CandleData;
 
 public final class CandleDataSink extends AbstractSink<Tuple2<Long, CandleData>> {
-
-    private static final long serialVersionUID = -5013366160879801184L;
-    private final int resolution;
     private static final Logger logger = LoggerFactory.getLogger(CandleDataSink.class);
+    private static final long serialVersionUID = -5013366160879801184L;
+
+    private final int resolution;
 
     public CandleDataSink(int resolution) {
         this.resolution = resolution;
@@ -20,7 +20,6 @@ public final class CandleDataSink extends AbstractSink<Tuple2<Long, CandleData>>
         logger.info("sink the candle data {}", value);
         final long contractId = value.f0;
         final CandleData candleData = value.f1;
-        writers.updateCandle(candleData, contractId, resolution);
+        compositeWriter.updateCandle(candleData, contractId, resolution);
     }
-
 }

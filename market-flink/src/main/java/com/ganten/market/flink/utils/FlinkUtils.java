@@ -6,22 +6,16 @@ import java.util.Properties;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.contrib.streaming.state.EmbeddedRocksDBStateBackend;
-import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.environment.CheckpointConfig;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
-import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
-import com.ganten.market.common.pojo.ResultEventHolder;
-import com.ganten.market.flink.process.CandleCalculator;
-import com.ganten.market.flink.sink.CandleDataSink;
+import com.ganten.market.common.constants.Constants;
 import com.google.common.collect.Maps;
 
 public final class FlinkUtils {
 
-    public static void configureStreamExecutionEnvironment(StreamExecutionEnvironment see,
-            ParameterTool parameterTool) {
-        see.setParallelism(Integer.parseInt(parameterTool.get("process.parallelism", "1")));
+    public static void configureSEE(StreamExecutionEnvironment see, ParameterTool parameterTool) {
+        see.setParallelism(Constants.ONE);
         if (parameterTool.has("checkpoint.dir")) {
             final String checkpointDir = parameterTool.get("checkpoint.dir");
             final int checkpointInterval = Integer.parseInt(parameterTool.get("checkpoint.interval"));
@@ -45,14 +39,6 @@ public final class FlinkUtils {
         }
     }
 
-    public static void calculateCandle(KeyedStream<ResultEventHolder, Long> keyedStream, final int resolution,
-            String slotSharingGroup) {
-        keyedStream.window(TumblingEventTimeWindows.of(Time.seconds(resolution))).process(new CandleCalculator())
-                .name("candle_calculator_" + resolution).uid("candle_calculator_" + resolution)
-                .slotSharingGroup(slotSharingGroup).addSink(new CandleDataSink(resolution))
-                .name("candle_sink_" + resolution).uid("candle_sink_" + resolution).slotSharingGroup(slotSharingGroup);
-    }
-
     public static Map<String, String> toMap(Properties properties) {
         Map<String, String> result = Maps.newHashMap();
         Enumeration<?> propertyNames = properties.propertyNames();
@@ -64,7 +50,5 @@ public final class FlinkUtils {
         return result;
     }
 
-
     private FlinkUtils() {}
-
 }
