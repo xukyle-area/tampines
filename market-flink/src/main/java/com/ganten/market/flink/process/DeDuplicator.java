@@ -1,33 +1,24 @@
 package com.ganten.market.flink.process;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.HashSet;
 import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import com.ganten.market.common.pojo.ResultEventHolder;
+import com.ganten.market.common.flink.BaseObject;
 
-public class DeDuplicator extends ProcessWindowFunction<ResultEventHolder, ResultEventHolder, Long, TimeWindow> {
-
-    private static final Logger logger = LoggerFactory.getLogger(DeDuplicator.class);
+public class DeDuplicator<T extends BaseObject> extends ProcessWindowFunction<T, T, Long, TimeWindow> {
 
     private static final long serialVersionUID = 7438254167809849816L;
 
     @Override
-    public void process(Long aLong, Context context, Iterable<ResultEventHolder> elements,
-            Collector<ResultEventHolder> out) throws Exception {
-        final Map<Long, ResultEventHolder> deDupMap = new HashMap<>();
-        for (ResultEventHolder element : elements) {
-            final long contractId = element.getContractId();
-            logger.debug("iterating {}", element);
-            deDupMap.put(contractId, element);
+    public void process(Long contractId, Context context, Iterable<T> elements, Collector<T> out) throws Exception {
+        HashSet<T> hashSet = new HashSet<>();
+
+        for (T element : elements) {
+            hashSet.add(element);
         }
-        for (Entry<Long, ResultEventHolder> entry : deDupMap.entrySet()) {
-            logger.debug("collect result {}", entry.getValue());
-            out.collect(entry.getValue());
+        for (T element : hashSet) {
+            out.collect(element);
         }
     }
 }

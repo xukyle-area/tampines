@@ -1,40 +1,26 @@
 package com.ganten.market.flink.writer;
 
-import java.util.List;
-import com.ganten.market.common.pojo.*;
+
+import com.ganten.market.common.enums.Contract;
+import com.ganten.market.common.enums.Market;
+import com.ganten.market.common.flink.Candle;
+import com.ganten.market.common.flink.OrderBook;
+import com.ganten.market.common.flink.Tick;
+import com.ganten.market.common.flink.Trade;
 
 public interface BaseWriter {
 
     /**
-     * for tick job
-     * update redis and mqtt
+     * 在不同的 job 中进行写入
+     * @link OrderbookJob : ask | bid
+     * @link TradeJob: last | volume
+     * @link TickJob: highest24hours | lowest24hours | change24hours | changePercent24hours
      */
-    default void updateQuote(Tick tick, String last24HPrice, Market market, long contractId) {}
+    default void updateTick(Market market, Contract contract, Tick tick) {}
 
-    /**
-    * for orderbook job
-    * update redis and mqtt
-    */
-    default void updateOrderBook(OrderBook orderBook, Market market, long contractId) {}
+    default void updateOrderBook(Market market, Contract contract, OrderBook orderBook) {}
 
+    default void updateTrade(Market market, Contract contract, Trade tradeInfo) {}
 
-    /**
-     * for trade job
-     * update redis and mqtt
-     */
-    default void updateTrade(TradeInfo tradeInfo, long contractId) {}
-
-    /**
-     * for trade job
-     * update dynamodb
-     * no implementation
-     */
-    default void updateTrade(List<ResultEventHolder> value) {}
-
-    default void updateCandle(CandleData candleData, long contractId, int resolution) {}
-
-    default List<TradeInfo> getTrade(long contractId, long startTime, long endTime) {
-        return null;
-    }
-
+    default public void updateCandle(Market market, Contract contract, Candle candleData, int resolution) {}
 }

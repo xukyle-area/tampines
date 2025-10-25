@@ -4,19 +4,22 @@ import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.ganten.market.common.pojo.CandleData;
-import com.ganten.market.common.pojo.ResultEventHolder;
-import com.ganten.market.common.pojo.TradeInfo;
+import com.ganten.market.common.flink.Candle;
+import com.ganten.market.common.flink.Trade;
 
-public class CandleCalculator
-        extends ProcessWindowFunction<ResultEventHolder, Tuple2<Long, CandleData>, Long, TimeWindow> {
+/**
+ * @param <IN>  The type of the input value: {@link Trade}
+ * @param <OUT> The type of the output value: {@link Candle}
+ * @param <KEY> The type of the key: {@link Long}
+ * @param <W>   The type of {@code Window} that this window function can be applied on: {@link TimeWindow}
+ */
+public class CandleCalculator extends ProcessWindowFunction<Trade, Candle, Long, TimeWindow> {
     private static final long serialVersionUID = -3539822931681340622L;
 
     private static final Logger logger = LoggerFactory.getLogger(CandleCalculator.class);
@@ -24,9 +27,19 @@ public class CandleCalculator
     @Override
     public void open(Configuration config) {}
 
+    /**
+     * Calculate candle data from trade events in the window
+     * resulting candle data will be collected to downstream sink
+     * - long: contractId
+     * - CandleData: candle data
+     *
+     * @param key      contractId
+     * @param context  window context
+     * @param elements trade events
+     * @param out      collector
+     */
     @Override
-    public void process(Long key, Context context, Iterable<ResultEventHolder> elements,
-            Collector<Tuple2<Long, CandleData>> out) throws Exception {
+    public void process(Long key, Context context, Iterable<Trade> elements, Collector<Candle> out) throws Exception {
         logger.info("window start: {}, window end {}", context.window().getStart(), context.window().getEnd());
         BigDecimal open = BigDecimal.ZERO;
         BigDecimal close = BigDecimal.ZERO;
@@ -35,8 +48,7 @@ public class CandleCalculator
         BigDecimal volume = BigDecimal.ZERO;
         boolean opened = false;
         Set<Long> trades = new HashSet<>();
-        for (ResultEventHolder resultEventHolder : elements) {
-            final TradeInfo tradeInfo = resultEventHolder.getTrade();
+        for (Trade tradeInfo : elements) {
             long tradeId = tradeInfo.getId();
             if (!trades.add(tradeId)) {
                 continue;
@@ -61,7 +73,7 @@ public class CandleCalculator
             }
         }
 
-        CandleData candleData = new CandleData();
+        Candle candleData = new Candle();
         candleData.setStartTime(Long.toString(context.window().getStart()));
         candleData.setOpen(open.toString());
         candleData.setClose(close.toString());
@@ -70,7 +82,6 @@ public class CandleCalculator
         candleData.setVolume(volume.toString());
 
         logger.info("collection candle data {}", candleData);
-        out.collect(Tuple2.of(key, candleData));
+        out.collect(candleData);
     }
-
 }

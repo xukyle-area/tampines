@@ -1,18 +1,15 @@
 package com.ganten.market.flink;
 
-import static com.ganten.market.common.constants.Constants.*;
-import java.time.Duration;
-import org.apache.flink.api.common.eventtime.TimestampAssigner;
-import org.apache.flink.api.common.eventtime.TimestampAssignerSupplier;
+import static com.ganten.market.common.constants.Constants.KAFKA_SOURCE;
+import static com.ganten.market.common.constants.Constants.ONE;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
-import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
-import com.ganten.market.common.pojo.ResultEventHolder;
+import com.ganten.market.common.flink.Trade;
 import com.ganten.market.flink.process.CandleCalculator;
 import com.ganten.market.flink.sink.CandleSink;
 import com.ganten.market.flink.utils.FlinkUtils;
@@ -21,47 +18,40 @@ import com.ganten.market.flink.utils.KafkaSourceUtils;
 public final class CandleJob {
 
     private static final String CANDLE_SLOT_SHARING_GROUP = "candle_slot_sharing_group";
+    private static final String CANDLE = "candle";
 
     /**
      * @param args ["candle.properties"]
      */
     public static void main(String[] args) throws Exception {
-        final ParameterTool parameterTool =
-                ParameterTool.fromPropertiesFile(CandleJob.class.getClassLoader().getResourceAsStream(args[0]));
-        final KafkaSource<ResultEventHolder> source = KafkaSourceUtils.fromParameterTool(parameterTool);
+        InputConfig inputConfig = InputConfig.build("trade", "candle");
 
-        final StreamExecutionEnvironment see = StreamExecutionEnvironment.getExecutionEnvironment();
-        FlinkUtils.configureSEE(see, parameterTool);
+        KafkaSource<Trade> source = KafkaSourceUtils.of(inputConfig, Trade.class);
+        StreamExecutionEnvironment see = StreamExecutionEnvironment.getExecutionEnvironment();
+        FlinkUtils.configureSee(see, inputConfig);
 
-        final WatermarkStrategy<ResultEventHolder> watermark = WatermarkStrategy
-                .<ResultEventHolder>forBoundedOutOfOrderness(Duration.ofSeconds(TWENTY))
-                .withIdleness(Duration.ofSeconds(TEN)).withTimestampAssigner(
-                        (TimestampAssignerSupplier<ResultEventHolder>) context -> (TimestampAssigner<ResultEventHolder>) (
-                                element, recordTimestamp) -> element.getTimestamp());
+        DataStreamSource<Trade> tradeStream =
+                see.fromSource(source, WatermarkStrategy.noWatermarks(), KAFKA_SOURCE).setParallelism(ONE);
+        // key by contractId
+        KeyedStream<Trade, Long> keyedStream = tradeStream.keyBy(Trade::getContractId);
 
-        final DataStreamSource<ResultEventHolder> tradeStream = see.fromSource(source, watermark, KAFKA_SOURCE).setParallelism(ONE);
-        final KeyedStream<ResultEventHolder, Long> keyedStream = tradeStream.keyBy(ResultEventHolder::getContractId);
+        CandleJob.calculate(keyedStream, 60);
+        CandleJob.calculate(keyedStream, 300);
+        CandleJob.calculate(keyedStream, 900);
+        CandleJob.calculate(keyedStream, 3600);
+        CandleJob.calculate(keyedStream, 21600);
+        CandleJob.calculate(keyedStream, 86400);
 
-        CandleJob.calculateCandle(keyedStream, 60);
-        CandleJob.calculateCandle(keyedStream, 300);
-        CandleJob.calculateCandle(keyedStream, 900);
-        CandleJob.calculateCandle(keyedStream, 3600);
-        CandleJob.calculateCandle(keyedStream, 21600);
-        CandleJob.calculateCandle(keyedStream, 86400);
-
-        see.execute(CANDLE_JOB);
+        see.execute(CANDLE);
     }
 
-    public static void calculateCandle(KeyedStream<ResultEventHolder, Long> keyedStream, final int resolution) {
-        keyedStream.window(TumblingEventTimeWindows
-                .of(Time.seconds(resolution)))
-                .process(new CandleCalculator())
-                .name("candle_calculator_" + resolution)
-                .uid("candle_calculator_" + resolution)
-                .slotSharingGroup(CANDLE_SLOT_SHARING_GROUP)
-                .addSink(new CandleSink(resolution))
-                .name("candle_sink_" + resolution)
-                .uid("candle_sink_" + resolution)
+    public static void calculate(KeyedStream<Trade, Long> keyedStream, final int resolution) {
+        String calculatorName = "candle_calculator_" + resolution;
+        String sinkName = "candle_sink_" + resolution;
+
+        keyedStream.window(TumblingEventTimeWindows.of(Time.seconds(resolution))).process(new CandleCalculator())
+                .name(calculatorName).uid(calculatorName).slotSharingGroup(CANDLE_SLOT_SHARING_GROUP)
+                .addSink(new CandleSink(resolution)).name(sinkName).uid(sinkName)
                 .slotSharingGroup(CANDLE_SLOT_SHARING_GROUP);
     }
 }

@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class JsonUtils {
-    protected static final ObjectMapper objectMapper;
 
+    protected static final ObjectMapper objectMapper;
 
     static {
         objectMapper = new ObjectMapper();

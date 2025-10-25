@@ -1,24 +1,15 @@
 package com.ganten.market.flink.sink;
 
-import org.apache.flink.configuration.Configuration;
-import com.ganten.market.common.pojo.Market;
-import com.ganten.market.common.pojo.ResultEventHolder;
+import com.ganten.market.common.enums.Contract;
+import com.ganten.market.common.enums.Market;
+import com.ganten.market.common.flink.OrderBook;
 
-public class OrderBookSink extends AbstractSink<ResultEventHolder> {
-
-    private final Market market;
-
-    public OrderBookSink(Market market) {
-        this.market = market;
-    }
+public class OrderBookSink extends AbstractSink<OrderBook> {
 
     @Override
-    public void open(Configuration parameters) {
-        super.open(parameters);
-    }
-
-    @Override
-    public void invoke(ResultEventHolder value, Context context) {
-        compositeWriter.updateOrderBook(value.getOrderBook(), market, value.getContractId());
+    public void invoke(OrderBook orderBook, Context context) {
+        long contractId = orderBook.getContractId();
+        Contract contract = Contract.getContractById(contractId);
+        compositeWriter.updateOrderBook(Market.GANTEN, contract, orderBook);
     }
 }

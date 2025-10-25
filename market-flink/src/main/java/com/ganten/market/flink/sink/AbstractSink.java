@@ -1,6 +1,5 @@
 package com.ganten.market.flink.sink;
 
-import java.util.Map;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.slf4j.Logger;
@@ -15,7 +14,6 @@ public class AbstractSink<T> extends RichSinkFunction<T> {
 
     @Override
     public void open(Configuration parameters) {
-        Map<String, String> mapConf = getRuntimeContext().getExecutionConfig().getGlobalJobParameters().toMap();
-        compositeWriter = new CompositeWriter(mapConf);
+        compositeWriter = new CompositeWriter();
     }
 }

@@ -1,11 +1,13 @@
 package com.ganten.market.flink.sink;
 
-import org.apache.flink.api.java.tuple.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.ganten.market.common.pojo.CandleData;
+import com.ganten.market.common.enums.Contract;
+import com.ganten.market.common.enums.Market;
+import com.ganten.market.common.flink.Candle;
+import com.ganten.market.flink.process.CandleCalculator;
 
-public final class CandleSink extends AbstractSink<Tuple2<Long, CandleData>> {
+public class CandleSink extends AbstractSink<Candle> {
     private static final Logger logger = LoggerFactory.getLogger(CandleSink.class);
     private static final long serialVersionUID = -5013366160879801184L;
 
@@ -15,11 +17,15 @@ public final class CandleSink extends AbstractSink<Tuple2<Long, CandleData>> {
         this.resolution = resolution;
     }
 
+    /**
+     * Tuple2<Long, CandleData> is calculated from CandleCalculator
+     *
+     * @see CandleCalculator
+     */
     @Override
-    public void invoke(Tuple2<Long, CandleData> value, Context context) {
-        logger.info("sink the candle data {}", value);
-        final long contractId = value.f0;
-        final CandleData candleData = value.f1;
-        compositeWriter.updateCandle(candleData, contractId, resolution);
+    public void invoke(Candle value, Context context) {
+        long contractId = value.getContractId();
+        Contract contract = Contract.getContractById(contractId);
+        compositeWriter.updateCandle(Market.GANTEN, contract, value, resolution);
     }
 }

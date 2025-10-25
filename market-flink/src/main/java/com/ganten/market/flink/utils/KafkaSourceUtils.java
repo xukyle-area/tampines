@@ -1,25 +1,25 @@
 package com.ganten.market.flink.utils;
 
-import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.KafkaSourceBuilder;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
-import com.ganten.market.common.pojo.ResultEventHolder;
-import com.ganten.market.flink.serialization.ResultEventHolderDeserializer;
+import com.ganten.market.common.constants.Constants;
+import com.ganten.market.flink.InputConfig;
+import com.ganten.market.flink.serialization.Deserializer;
 
 public final class KafkaSourceUtils {
 
-    public static KafkaSource<ResultEventHolder> fromParameterTool(ParameterTool parameterTool)
-            throws NoSuchMethodException {
+    public static <T> KafkaSource<T> of(InputConfig config, Class<T> clazz) throws NoSuchMethodException {
 
-        final String bootStrapServers = parameterTool.get("kafka.bootstrap.servers");
-        final String topic = parameterTool.get("kafka.topic");
-        final String groupId = parameterTool.get("kafka.group.id");
-        final KafkaSourceBuilder<ResultEventHolder> sourceBuilder =
-                KafkaSource.<ResultEventHolder>builder().setBootstrapServers(bootStrapServers).setTopics(topic)
+        final String topic = config.getTopic();
+        final String groupId = config.getGroupId();
+
+        final KafkaSourceBuilder<T> sourceBuilder =
+                KafkaSource.<T>builder().setBootstrapServers(Constants.BOOTSTRAP_SERVERS).setTopics(topic)
                         .setGroupId(groupId).setProperty("partition.discovery.interval.ms", "10000")
-                        .setValueOnlyDeserializer(new ResultEventHolderDeserializer());
+                        .setValueOnlyDeserializer(new Deserializer<>(clazz));
+
         sourceBuilder.setStartingOffsets(OffsetsInitializer.committedOffsets(OffsetResetStrategy.LATEST));
         return sourceBuilder.build();
     }

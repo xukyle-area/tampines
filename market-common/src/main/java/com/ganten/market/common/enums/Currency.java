@@ -1,8 +1,13 @@
 package com.ganten.market.common.enums;
 
 public enum Currency {
-    USD("USD", false), HKD("HKD", false), BTC("BTC", true), ETH("ETH", true), LTC("LTC", true), XRP("XRP",
-            true), BCH("BCH", true);
+    USD("USD", false),
+    HKD("HKD", false),
+    BTC("BTC", true),
+    ETH("ETH", true),
+    LTC("LTC", true),
+    XRP("XRP", true),
+    BCH("BCH", true);
 
     private final String code;
     private final boolean isCrypto;

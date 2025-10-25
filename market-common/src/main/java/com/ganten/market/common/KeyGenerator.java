@@ -1,22 +1,42 @@
 package com.ganten.market.common;
 
 import com.ganten.market.common.enums.Contract;
-import com.ganten.market.common.pojo.Market;
+import com.ganten.market.common.enums.Side;
+import com.ganten.market.common.enums.Market;
 import com.google.common.base.Joiner;
 
 public class KeyGenerator {
 
     private static final String REALTIME = "realtime";
 
-    public static String realtimeKey(Contract contract, Market market) {
-        return Joiner.on(SEPARATOR).join(REALTIME, contract.getBase(), contract.getQuote(), market.toString());
+    public static String realtimeKey(Market market, Contract contract) {
+        return Joiner.on(SEPARATOR).join(REALTIME, market, contract);
     }
 
     private static final String CANDLE = "candle";
 
-    public static String candleKey(Contract contract, int resolution) {
-        return Joiner.on(SEPARATOR).join(CANDLE, contract.getBase(), contract.getQuote(), resolution);
+    public static String candleKey(Market market, Contract contract, int resolution) {
+        return Joiner.on(SEPARATOR).join(CANDLE, market, contract, resolution);
     }
+
+    private static final String TRADE = "trade";
+
+    public static String tradeKey(Market market, Contract contract) {
+        return Joiner.on(SEPARATOR).join(TRADE, market, contract);
+    }
+
+    private static final String ORDERBOOK = "order_book";
+
+    public static String orderBookKey(Market market, Contract contract, Side side) {
+        return Joiner.on(SEPARATOR).join(ORDERBOOK, market, contract, side);
+    }
+
+    private static final String TICK = "tick";
+
+    public static String tickKey(Market market, Contract contract) {
+        return Joiner.on(SEPARATOR).join(TICK, market, contract);
+    }
+
 
     private static final String QUOTE24_PREFIX = "quote24h";
     private static final String ASK_PREFIX = "order_book_ask_2";
@@ -32,28 +52,28 @@ public class KeyGenerator {
 
 
 
-    public static String generateRedisQuote24HKey(long contractId, Market market) {
-        return Joiner.on(SEPARATOR).join(QUOTE24_PREFIX, contractId, market.toString());
+    public static String generateRedisQuote24HKey(Contract contract, Market market) {
+        return Joiner.on(SEPARATOR).join(QUOTE24_PREFIX, contract, market.toString());
     }
 
-    public static String generateOrderBookAskKey(long contractId, Market market) {
-        return Joiner.on(SEPARATOR).join(ASK_PREFIX, contractId, market.toString());
+    public static String generateOrderBookAskKey(Contract contract, Market market) {
+        return Joiner.on(SEPARATOR).join(ASK_PREFIX, contract, market.toString());
     }
 
-    public static String generateOrderBookBidKey(long contractId, Market market) {
-        return Joiner.on(SEPARATOR).join(BID_PREFIX, contractId, market.toString());
+    public static String generateOrderBookBidKey(Contract contract, Market market) {
+        return Joiner.on(SEPARATOR).join(BID_PREFIX, contract, market.toString());
     }
 
-    public static String generateDiffOrderBookKey(long contractId, Market market) {
-        return Joiner.on(SEPARATOR).join(DIFF_PREFIX, contractId, market.toString());
+    public static String generateDiffOrderBookKey(Contract contract, Market market) {
+        return Joiner.on(SEPARATOR).join(DIFF_PREFIX, contract, market.toString());
     }
 
-    public static String generateCandleCacheKey(long contractId, int resolution) {
-        return Joiner.on(SEPARATOR).join(CANDLE_CACHE_PREFIX, contractId, resolution);
+    public static String generateCandleCacheKey(Contract contract, int resolution) {
+        return Joiner.on(SEPARATOR).join(CANDLE_CACHE_PREFIX, contract, resolution);
     }
 
-    public static String generateTradeCacheKey(long contractId) {
-        return Joiner.on(SEPARATOR).join(TRADE_CACHE_PREFIX, contractId);
+    public static String generateTradeCacheKey(Contract contract) {
+        return Joiner.on(SEPARATOR).join(TRADE_CACHE_PREFIX, contract);
     }
 
     public static String generateHistoryIndexPriceKey(String symbol, long timestamp) {
