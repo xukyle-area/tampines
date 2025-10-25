@@ -42,8 +42,7 @@ public final class TradeJob {
             .uid(TRADE_REDIS_SINK)
             .setParallelism(ONE);
 
-        keyedStream.window(TumblingProcessingTimeWindows
-            .of(Time.seconds(ONE)))
+        keyedStream.window(TumblingProcessingTimeWindows.of(Time.seconds(ONE)))
             .aggregate(new ResultEventAggregate())
             .name(TRADE_DYNAMO_AGG)
             .uid(TRADE_DYNAMO_AGG)
