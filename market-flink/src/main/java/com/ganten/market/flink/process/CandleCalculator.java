@@ -17,9 +17,9 @@ import com.ganten.market.common.pojo.TradeInfo;
 
 public class CandleCalculator
         extends ProcessWindowFunction<ResultEventHolder, Tuple2<Long, CandleData>, Long, TimeWindow> {
+    private static final long serialVersionUID = -3539822931681340622L;
 
     private static final Logger logger = LoggerFactory.getLogger(CandleCalculator.class);
-    private static final long serialVersionUID = -3539822931681340622L;
 
     @Override
     public void open(Configuration config) {}

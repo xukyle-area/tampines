@@ -1,5 +1,6 @@
 package com.ganten.market.flink;
 
+import static com.ganten.market.common.constants.Constants.*;
 import java.time.Duration;
 import org.apache.flink.api.common.eventtime.TimestampAssigner;
 import org.apache.flink.api.common.eventtime.TimestampAssignerSupplier;
@@ -11,10 +12,9 @@ import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
-import com.ganten.market.common.constants.Constants;
 import com.ganten.market.common.pojo.ResultEventHolder;
 import com.ganten.market.flink.process.CandleCalculator;
-import com.ganten.market.flink.sink.CandleDataSink;
+import com.ganten.market.flink.sink.CandleSink;
 import com.ganten.market.flink.utils.FlinkUtils;
 import com.ganten.market.flink.utils.KafkaSourceUtils;
 
@@ -33,14 +33,13 @@ public final class CandleJob {
         final StreamExecutionEnvironment see = StreamExecutionEnvironment.getExecutionEnvironment();
         FlinkUtils.configureSEE(see, parameterTool);
 
-        final WatermarkStrategy<ResultEventHolder> watermarkStrategy = WatermarkStrategy
-                .<ResultEventHolder>forBoundedOutOfOrderness(Duration.ofSeconds(20))
-                .withIdleness(Duration.ofSeconds(10)).withTimestampAssigner(
+        final WatermarkStrategy<ResultEventHolder> watermark = WatermarkStrategy
+                .<ResultEventHolder>forBoundedOutOfOrderness(Duration.ofSeconds(TWENTY))
+                .withIdleness(Duration.ofSeconds(TEN)).withTimestampAssigner(
                         (TimestampAssignerSupplier<ResultEventHolder>) context -> (TimestampAssigner<ResultEventHolder>) (
                                 element, recordTimestamp) -> element.getTimestamp());
 
-        final DataStreamSource<ResultEventHolder> tradeStream =
-                see.fromSource(source, watermarkStrategy, Constants.KAFKA_SOURCE).setParallelism(1);
+        final DataStreamSource<ResultEventHolder> tradeStream = see.fromSource(source, watermark, KAFKA_SOURCE).setParallelism(ONE);
         final KeyedStream<ResultEventHolder, Long> keyedStream = tradeStream.keyBy(ResultEventHolder::getContractId);
 
         CandleJob.calculateCandle(keyedStream, 60);
@@ -50,14 +49,19 @@ public final class CandleJob {
         CandleJob.calculateCandle(keyedStream, 21600);
         CandleJob.calculateCandle(keyedStream, 86400);
 
-        see.execute(Constants.CANDLE_JOB);
+        see.execute(CANDLE_JOB);
     }
 
     public static void calculateCandle(KeyedStream<ResultEventHolder, Long> keyedStream, final int resolution) {
-        keyedStream.window(TumblingEventTimeWindows.of(Time.seconds(resolution))).process(new CandleCalculator())
-                .name("candle_calculator_" + resolution).uid("candle_calculator_" + resolution)
-                .slotSharingGroup(CANDLE_SLOT_SHARING_GROUP).addSink(new CandleDataSink(resolution))
-                .name("candle_sink_" + resolution).uid("candle_sink_" + resolution)
+        keyedStream.window(TumblingEventTimeWindows
+                .of(Time.seconds(resolution)))
+                .process(new CandleCalculator())
+                .name("candle_calculator_" + resolution)
+                .uid("candle_calculator_" + resolution)
+                .slotSharingGroup(CANDLE_SLOT_SHARING_GROUP)
+                .addSink(new CandleSink(resolution))
+                .name("candle_sink_" + resolution)
+                .uid("candle_sink_" + resolution)
                 .slotSharingGroup(CANDLE_SLOT_SHARING_GROUP);
     }
 }
