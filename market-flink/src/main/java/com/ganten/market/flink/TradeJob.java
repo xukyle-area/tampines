@@ -33,8 +33,12 @@ public final class TradeJob {
         final StreamExecutionEnvironment see = StreamExecutionEnvironment.getExecutionEnvironment().setParallelism(ONE);
         FlinkUtils.configureSEE(see, parameterTool);
 
-        final DataStreamSource<ResultEventHolder> tradeStream =
-                see.fromSource(source, WatermarkStrategy.noWatermarks(), Constants.KAFKA_SOURCE).setParallelism(ONE);
+        final DataStreamSource<ResultEventHolder> tradeStream = see.fromSource(
+            source,
+            WatermarkStrategy.noWatermarks(),
+            Constants.KAFKA_SOURCE
+        ).setParallelism(ONE);
+
         final KeyedStream<ResultEventHolder, Long> keyedStream = tradeStream.keyBy(ResultEventHolder::getContractId);
 
         keyedStream.addSink(new TradeSingleSink(new HashMap<>()))
