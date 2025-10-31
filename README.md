@@ -60,6 +60,23 @@
    ```bash
    flink --version
    ```
+5. 端口
+Flink 默认会使用两个主要的端口：
+   1. **REST 端口**：用于与 Flink 的 REST API 通信，默认端口是 **8081**。这个端口通常用于访问 Flink 的 Web UI 和提交作业。
+   2. **RPC 端口**：用于 Flink 内部组件之间的通信（如 JobManager 和 TaskManager），默认端口是 **6123**。
+
+如果需要修改这些端口，可以在 Flink 的配置文件 `flink-conf.yaml` 中进行设置：
+
+- 修改 REST 端口：
+  ```yaml
+  rest.port: 8081
+  ```
+
+- 修改 RPC 端口：
+  ```yaml
+  jobmanager.rpc.port: 6123
+  ```
+
 
 ### 验证安装
 - **Zookeeper**: 检查端口监听
