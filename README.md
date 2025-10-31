@@ -1,3 +1,85 @@
+## 环境准备
+
+### 依赖组件
+- **Zookeeper**: localhost:2181
+- **Kafka**: localhost:9092
+- **Redis**: localhost:6379
+- **Flink**: 1.17.2
+
+### 安装步骤
+
+#### 1. 安装 Zookeeper 和 Kafka
+1. 下载 Kafka（包含 Zookeeper）：
+   ```bash
+   curl -O https://downloads.apache.org/kafka/3.5.1/kafka_2.13-3.5.1.tgz
+   ```
+2. 解压并移动到 `/usr/local/kafka`：
+   ```bash
+   tar -xzf kafka_2.13-3.5.1.tgz
+   sudo mv kafka_2.13-3.5.1 /usr/local/kafka
+   ```
+3. 配置环境变量：
+   ```bash
+   echo 'export KAFKA_HOME=/usr/local/kafka' >> ~/.zshrc
+   echo 'export PATH=$PATH:$KAFKA_HOME/bin' >> ~/.zshrc
+   source ~/.zshrc
+   ```
+
+#### 2. 安装 Redis
+1. 使用 Homebrew 安装 Redis：
+   ```bash
+   brew install redis
+   ```
+2. 配置 Redis（可选）：
+   ```bash
+   cp /opt/homebrew/etc/redis.conf ~/redis.conf
+   vim ~/redis.conf
+   ```
+3. 启动 Redis：
+   ```bash
+   redis-server --daemonize yes
+   ```
+
+#### 3. 安装 Flink
+1. 下载 Flink：
+   ```bash
+   curl -O https://archive.apache.org/dist/flink/flink-1.17.2/flink-1.17.2-bin-scala_2.12.tgz
+   ```
+2. 解压并移动到 `/usr/local/flink`：
+   ```bash
+   tar -xzf flink-1.17.2-bin-scala_2.12.tgz
+   sudo mv flink-1.17.2 /usr/local/flink
+   ```
+3. 配置环境变量：
+   ```bash
+   echo 'export FLINK_HOME=/usr/local/flink' >> ~/.zshrc
+   echo 'export PATH=$PATH:$FLINK_HOME/bin' >> ~/.zshrc
+   source ~/.zshrc
+   ```
+4. 验证安装：
+   ```bash
+   flink --version
+   ```
+
+### 验证安装
+- **Zookeeper**: 检查端口监听
+  ```bash
+  lsof -i :2181
+  ```
+- **Kafka**: 检查端口监听
+  ```bash
+  lsof -i :9092
+  ```
+- **Redis**: 测试连接
+  ```bash
+  redis-cli ping
+  # 应返回: PONG
+  ```
+- **Flink**: 检查版本
+  ```bash
+  flink --version
+  ```
+
 ## 🎯 Kafka & ZooKeeper
 
 ### 启动服务
@@ -144,8 +226,7 @@ tail -f $FLINK_HOME/log/flink-*.log
 
 ```bash
 # 提交作业（指定主类）
-flink run -c com.ganten.market.flink.TickJob \
-  target/market-flink-1.0.0-SNAPSHOT.jar
+flink run -c com.ganten.market.flink.TickJob target/market-flink-1.0.0-SNAPSHOT.jar
 
 # 列出运行中的作业
 flink list -r
