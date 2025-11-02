@@ -46,7 +46,13 @@ public class KafkaWriter implements BaseWriter {
     }
 
     @Override
-    public void updateOrderBook(Market market, Contract contract, OrderBook orderBook) {}
+    public void updateOrderBook(Market market, Contract contract, OrderBook orderBook) {
+        if (contract == null) {
+            return;
+        }
+        String mqttTopic = this.buildMqttTopic(ORDER_BOOK_TOPIC, contract, "0.01");
+        this.sendKafkaMessage(mqttTopic, orderBook);
+    }
 
     @Override
     public void updateTrade(Market market, Contract contract, Trade tradeInfo) {

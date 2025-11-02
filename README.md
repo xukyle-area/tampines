@@ -285,3 +285,36 @@ stop-cluster.sh
 # 验证已停止
 jps | grep -E "StandaloneSession|TaskManager"
 ```
+
+### 测试数据
+
+项目提供了示例订单数据用于测试 OrderBookProcessor：
+
+#### 示例订单数据
+`sample-orders.json` 包含了完整的订单操作序列，模拟了订单簿的各种操作：
+
+1. **初始订单簿建立**：添加买单和卖单
+2. **订单更新**：增加现有价格的订单数量
+3. **部分成交**：减少订单数量
+4. **完全成交**：删除整个价格档位
+5. **新增订单**：添加新的价格档位
+
+#### 使用示例数据
+可以通过以下方式将数据发送到 Kafka：
+
+```bash
+# 创建订单主题
+kafka-topics.sh --create --topic order --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+
+# 发送示例订单数据到 Kafka
+cat sample-orders.json | kafka-console-producer.sh --topic order --bootstrap-server localhost:9092
+```
+
+#### 订单字段说明
+- `contractId`: 合约ID，用于按合约分组处理
+- `timestamp`: 时间戳（毫秒）
+- `price`: 订单价格
+- `quantity`: 订单数量
+- `amount`: 订单金额（price × quantity）
+- `side`: 买卖方向（"BID"=买单，"ASK"=卖单）
+- `action`: 操作类型（"INSERT"=新增/增加，"DELETE"=减少/删除）

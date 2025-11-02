@@ -33,6 +33,25 @@ public class RedisWriter implements BaseWriter {
         final String askKey = KeyGenerator.orderBookKey(market, contract, Side.ASK);
         final String bidKey = KeyGenerator.orderBookKey(market, contract, Side.BID);
 
+        try (Jedis jedis = RedisClient.getResource()) {
+            // 存储买单（BID）
+            if (orderBook.getBids() != null && !orderBook.getBids().isEmpty()) {
+                jedis.del(bidKey); // 先清空
+                for (java.util.Map.Entry<java.math.BigDecimal, java.math.BigDecimal> entry : orderBook.getBids()
+                        .entrySet()) {
+                    jedis.hset(bidKey, entry.getKey().toString(), entry.getValue().toString());
+                }
+            }
+
+            // 存储卖单（ASK）
+            if (orderBook.getAsks() != null && !orderBook.getAsks().isEmpty()) {
+                jedis.del(askKey); // 先清空
+                for (java.util.Map.Entry<java.math.BigDecimal, java.math.BigDecimal> entry : orderBook.getAsks()
+                        .entrySet()) {
+                    jedis.hset(askKey, entry.getKey().toString(), entry.getValue().toString());
+                }
+            }
+        }
     }
 
     @Override
