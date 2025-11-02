@@ -9,9 +9,8 @@ import com.ganten.market.common.redis.RedisClient;
 @SpringBootApplication
 public class MarketOuterApplication {
 
-
     public static void main(String[] args) {
-        RedisClient.init("127.0.0.1", 6379, "");
+        RedisClient.init("localhost", 6379, "");
         SpringApplication.run(MarketOuterApplication.class, args);
     }
 }

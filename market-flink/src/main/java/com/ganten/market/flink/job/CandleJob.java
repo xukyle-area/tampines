@@ -21,6 +21,8 @@ public final class CandleJob {
     private static final String JOB_NAME = "candle";
     private static final String JOB_TOPIC = "trade";
 
+    private static final int[] RESOLUTIONS = {60, 300, 900, 3600, 21600, 86400};
+
     /**
      * @param args ["candle.properties"]
      */
@@ -36,13 +38,9 @@ public final class CandleJob {
         // key by contractId
         KeyedStream<Trade, Long> keyedStream = tradeStream.keyBy(Trade::getContractId);
 
-        CandleJob.calculate(keyedStream, 60);
-        CandleJob.calculate(keyedStream, 300);
-        CandleJob.calculate(keyedStream, 900);
-        CandleJob.calculate(keyedStream, 3600);
-        CandleJob.calculate(keyedStream, 21600);
-        CandleJob.calculate(keyedStream, 86400);
-
+        for (int resolution : RESOLUTIONS) {
+            CandleJob.calculate(keyedStream, resolution);
+        }
         see.execute(JOB_NAME);
     }
 

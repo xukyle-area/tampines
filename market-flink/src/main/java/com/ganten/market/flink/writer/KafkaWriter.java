@@ -29,7 +29,6 @@ public class KafkaWriter implements BaseWriter {
     private static final String KAFKA_TOPIC = "mqtt";
     private static final String TICK_TOPIC = "mqtt/quote/%s/tick";
     private static final String TRADE_TOPIC = "mqtt/quote/%s/trade";
-    private static final String ORDER_BOOK_TOPIC = "mqtt/quote/%s/orderBook/?&grouping=%s";
     private static final String CANDLE_TOPIC = "mqtt/quote/%s/candle/?resolution=%s";
 
     private final Producer<String, String> producer;
@@ -50,7 +49,7 @@ public class KafkaWriter implements BaseWriter {
         if (contract == null) {
             return;
         }
-        String mqttTopic = this.buildMqttTopic(ORDER_BOOK_TOPIC, contract, "0.01");
+        String mqttTopic = String.format("mqtt/quote/%s/orderBook/?&grouping=0.01", contract.getSymbol());
         this.sendKafkaMessage(mqttTopic, orderBook);
     }
 

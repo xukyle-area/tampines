@@ -66,11 +66,6 @@ public enum Contract {
         return null;
     }
 
-    public List<String> getGrouping() {
-        return Stream.of(1, 5, 10, 100).map(t -> new BigDecimal(t).multiply(new BigDecimal(tickSize)))
-                .map(BigDecimal::stripTrailingZeros).map(BigDecimal::toPlainString).collect(Collectors.toList());
-    }
-
     public CurrencyPair toCurrencyPair() {
         return new CurrencyPair(base, quote);
     }

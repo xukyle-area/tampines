@@ -19,6 +19,10 @@ public class RedisWriter implements BaseWriter {
     private static final int CACHE_POINTS_NUM = 1502;
     private static final long TRADE_CACHE_TIME = 2 * 24 * 60 * 60 * 1000 + 10 * 60 * 1000;
 
+    public RedisWriter() {
+        RedisClient.init("localhost", 6379, "");
+    }
+
     @Override
     public void updateTick(Market market, Contract contract, Tick tick) {
         String tickKey = KeyGenerator.tickerKey(market, contract);

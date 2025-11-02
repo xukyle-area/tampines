@@ -13,6 +13,12 @@ import com.ganten.market.common.flink.output.OrderBook;
 
 public class OrderBookProcessor extends KeyedProcessFunction<Long, Order, OrderBook> {
 
+    private final int resolution;
+
+    public OrderBookProcessor(int resolution) {
+        this.resolution = resolution;
+    }
+
     private MapState<BigDecimal, BigDecimal> bidState;
     private MapState<BigDecimal, BigDecimal> askState;
 
@@ -32,16 +38,22 @@ public class OrderBookProcessor extends KeyedProcessFunction<Long, Order, OrderB
         BigDecimal quantity = order.getQuantity();
         BigDecimal currentQuantity = sideState.get(price);
 
+        System.out.println(
+                "Processing order: " + order.getAction() + " " + order.getSide() + " " + price + " qty:" + quantity);
+
         if (Action.INSERT.name().equals(order.getAction())) {
             BigDecimal newQuantity = currentQuantity != null ? currentQuantity.add(quantity) : quantity;
             sideState.put(price, newQuantity);
+            System.out.println("INSERT: " + order.getSide() + " " + price + " -> " + newQuantity);
         } else if (Action.DELETE.name().equals(order.getAction())) {
             if (currentQuantity != null) {
                 BigDecimal newQuantity = currentQuantity.subtract(quantity);
                 if (newQuantity.compareTo(BigDecimal.ZERO) <= 0) {
                     sideState.remove(price);
+                    System.out.println("DELETE: " + order.getSide() + " " + price + " removed");
                 } else {
                     sideState.put(price, newQuantity);
+                    System.out.println("DELETE: " + order.getSide() + " " + price + " -> " + newQuantity);
                 }
             }
         }
@@ -60,6 +72,9 @@ public class OrderBookProcessor extends KeyedProcessFunction<Long, Order, OrderB
         for (BigDecimal price : askState.keys())
             orderBook.getAsks().put(price, askState.get(price));
         orderBook.setContractId(ctx.getCurrentKey());
+
+        System.out.println("Timer triggered for contract " + ctx.getCurrentKey() + ", Bids: "
+                + orderBook.getBids().size() + ", Asks: " + orderBook.getAsks().size());
 
         out.collect(orderBook);
 

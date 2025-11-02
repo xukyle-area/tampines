@@ -152,7 +152,7 @@ tail -f /tmp/kafka.log
 ```bash
 # 创建 Topic
 kafka-topics.sh --create \
-  --topic market-data \
+  --topic mqtt \
   --bootstrap-server localhost:9092 \
   --partitions 3 \
   --replication-factor 1

@@ -19,6 +19,7 @@ public final class OrderbookJob {
 
     private static final String JOB_NAME = "orderbook";
     private static final String JOB_TOPIC = "order";
+    private static final int[] RESOLUTIONS = {1, 5, 10, 100};
 
     public static void main(String[] args) throws Exception {
         InputConfig inputConfig = InputConfig.build(JOB_TOPIC, JOB_NAME);
@@ -32,10 +33,21 @@ public final class OrderbookJob {
         // key by contractId
         KeyedStream<Order, Long> keyedStream = orderStream.keyBy(Order::getContractId);
 
-        // build a
-        keyedStream.process(new OrderBookProcessor()).name(JOB_NAME).uid(JOB_NAME + "-process").setParallelism(ONE)
-                .addSink(new OrderBookSink()).name(JOB_NAME).uid(JOB_NAME + "-sink").setParallelism(ONE);
+        for (int resolution : RESOLUTIONS) {
+            OrderbookJob.calculate(keyedStream, resolution);
+        }
         see.execute(JOB_NAME + "-job");
     }
 
+    private static void calculate(KeyedStream<Order, Long> keyedStream, final int resolution) {
+        keyedStream
+                // add process orderbook
+                .process(new OrderBookProcessor(resolution))
+                // set job name and uid
+                .name(JOB_NAME).uid(JOB_NAME + "-process-" + resolution).setParallelism(ONE)
+                // sink orderbook to redis
+                .addSink(new OrderBookSink())
+                // set job name and uid
+                .name(JOB_NAME).uid(JOB_NAME + "-sink-" + resolution).setParallelism(ONE);
+    }
 }
