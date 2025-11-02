@@ -6,7 +6,7 @@ import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
 import com.ganten.market.common.flink.BaseObject;
 
-public class DeDuplicator<T extends BaseObject> extends ProcessWindowFunction<T, T, Long, TimeWindow> {
+public class DeduplicateProcessor<T extends BaseObject> extends ProcessWindowFunction<T, T, Long, TimeWindow> {
 
     private static final long serialVersionUID = 7438254167809849816L;
 

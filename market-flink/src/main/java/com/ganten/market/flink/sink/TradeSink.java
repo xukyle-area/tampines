@@ -2,7 +2,7 @@ package com.ganten.market.flink.sink;
 
 import com.ganten.market.common.enums.Contract;
 import com.ganten.market.common.enums.Market;
-import com.ganten.market.common.flink.Trade;
+import com.ganten.market.common.flink.input.Trade;
 
 public class TradeSink extends AbstractSink<Trade> {
 

@@ -1,4 +1,4 @@
-package com.ganten.market.common.flink;
+package com.ganten.market.common.flink.mediate;
 
 
 import java.math.BigDecimal;

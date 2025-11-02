@@ -5,7 +5,7 @@ import org.apache.flink.connector.kafka.source.KafkaSourceBuilder;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import com.ganten.market.common.constants.Constants;
-import com.ganten.market.flink.InputConfig;
+import com.ganten.market.flink.config.InputConfig;
 import com.ganten.market.flink.serialization.Deserializer;
 
 public final class KafkaSourceUtils {

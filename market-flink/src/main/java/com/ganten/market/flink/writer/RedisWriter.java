@@ -1,19 +1,14 @@
 package com.ganten.market.flink.writer;
 
-import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import com.ganten.market.common.KeyGenerator;
 import com.ganten.market.common.enums.Contract;
 import com.ganten.market.common.enums.Market;
 import com.ganten.market.common.enums.Side;
-import com.ganten.market.common.flink.Candle;
-import com.ganten.market.common.flink.OrderBook;
-import com.ganten.market.common.flink.Tick;
-import com.ganten.market.common.flink.Trade;
-import com.ganten.market.common.model.PriceQuantity;
+import com.ganten.market.common.flink.input.Trade;
+import com.ganten.market.common.flink.output.Candle;
+import com.ganten.market.common.flink.output.OrderBook;
+import com.ganten.market.common.flink.output.Tick;
 import com.ganten.market.common.redis.RedisClient;
 import com.ganten.market.common.utils.ObjectUtils;
 import redis.clients.jedis.Jedis;
@@ -26,7 +21,7 @@ public class RedisWriter implements BaseWriter {
 
     @Override
     public void updateTick(Market market, Contract contract, Tick tick) {
-        String tickKey = KeyGenerator.tickKey(market, contract);
+        String tickKey = KeyGenerator.tickerKey(market, contract);
 
         try (Jedis jedis = RedisClient.getResource()) {
             jedis.hset(tickKey, ObjectUtils.toStringMap(tick));
@@ -38,23 +33,6 @@ public class RedisWriter implements BaseWriter {
         final String askKey = KeyGenerator.orderBookKey(market, contract, Side.ASK);
         final String bidKey = KeyGenerator.orderBookKey(market, contract, Side.BID);
 
-        this.saveOrderBook(askKey, orderBook.getAsks());
-        this.saveOrderBook(bidKey, orderBook.getBids());
-    }
-
-    private void saveOrderBook(String key, List<PriceQuantity> list) {
-        try (Jedis jedis = RedisClient.getResource()) {
-            Map<String, String> originMap = jedis.hgetAll(key);
-
-            Map<String, String> newMap = list.stream().collect(Collectors.toMap(o -> o.getPrice().toString(),
-                    o -> o.getQuantity().toString(), (existing, replacement) -> {
-                        BigDecimal e = new BigDecimal(existing);
-                        BigDecimal r = new BigDecimal(replacement);
-                        return e.add(r).toString();
-                    }));
-            originMap.keySet().removeIf(o -> !newMap.containsKey(o));
-            jedis.hset(key, newMap);
-        }
     }
 
     @Override

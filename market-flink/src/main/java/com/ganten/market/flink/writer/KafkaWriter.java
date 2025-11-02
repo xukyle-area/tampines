@@ -1,10 +1,6 @@
 package com.ganten.market.flink.writer;
 
-import static java.util.stream.Collectors.toList;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.Properties;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
@@ -15,13 +11,11 @@ import org.slf4j.LoggerFactory;
 import com.ganten.market.common.constants.Constants;
 import com.ganten.market.common.enums.Contract;
 import com.ganten.market.common.enums.Market;
-import com.ganten.market.common.flink.Candle;
-import com.ganten.market.common.flink.OrderBook;
-import com.ganten.market.common.flink.Tick;
-import com.ganten.market.common.flink.Trade;
-import com.ganten.market.common.model.PriceQuantity;
+import com.ganten.market.common.flink.input.Trade;
+import com.ganten.market.common.flink.output.Candle;
+import com.ganten.market.common.flink.output.OrderBook;
+import com.ganten.market.common.flink.output.Tick;
 import com.ganten.market.common.model.PublishMessage;
-import com.ganten.market.common.utils.BigDecimalUtils;
 import com.ganten.market.common.utils.JsonUtils;
 import com.google.protobuf.ByteString;
 
@@ -52,20 +46,7 @@ public class KafkaWriter implements BaseWriter {
     }
 
     @Override
-    public void updateOrderBook(Market market, Contract contract, OrderBook orderBook) {
-        int tickSize = BigDecimalUtils.getScale(new BigDecimal(contract.getTickSize()));
-        int lotSize = BigDecimalUtils.getScale(new BigDecimal(contract.getLotSize()));
-        List<PriceQuantity> askList =
-                orderBook.getAsks().stream().map(ob -> this.toOrderBookData(ob, tickSize, lotSize)).collect(toList());
-        List<PriceQuantity> bidList =
-                orderBook.getBids().stream().map(ob -> this.toOrderBookData(ob, tickSize, lotSize)).collect(toList());
-        List<String> groupingList = contract.getGrouping();
-        for (String grouping : groupingList) {
-            OrderBook response = OrderBook.build(askList, bidList, grouping);
-            String mqttTopic = this.buildMqttTopic(ORDER_BOOK_TOPIC, contract, grouping);
-            this.sendKafkaMessage(mqttTopic, response);
-        }
-    }
+    public void updateOrderBook(Market market, Contract contract, OrderBook orderBook) {}
 
     @Override
     public void updateTrade(Market market, Contract contract, Trade tradeInfo) {
@@ -102,12 +83,5 @@ public class KafkaWriter implements BaseWriter {
                 log.error("send mqtt error", ex);
             }
         }));
-    }
-
-    private PriceQuantity toOrderBookData(PriceQuantity tuple, int tickSize, int lotSize) {
-        PriceQuantity res = new PriceQuantity();
-        res.setQuantity(tuple.getQuantity().setScale(lotSize, RoundingMode.HALF_EVEN));
-        res.setPrice(tuple.getPrice().setScale(tickSize, RoundingMode.HALF_EVEN));
-        return res;
     }
 }

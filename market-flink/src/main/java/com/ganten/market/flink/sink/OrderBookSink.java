@@ -2,10 +2,9 @@ package com.ganten.market.flink.sink;
 
 import com.ganten.market.common.enums.Contract;
 import com.ganten.market.common.enums.Market;
-import com.ganten.market.common.flink.OrderBook;
+import com.ganten.market.common.flink.output.OrderBook;
 
 public class OrderBookSink extends AbstractSink<OrderBook> {
-
     @Override
     public void invoke(OrderBook orderBook, Context context) {
         long contractId = orderBook.getContractId();

@@ -1,6 +1,7 @@
-package com.ganten.market.common.flink;
+package com.ganten.market.common.flink.output;
 
 import java.math.BigDecimal;
+import com.ganten.market.common.flink.BaseObject;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 

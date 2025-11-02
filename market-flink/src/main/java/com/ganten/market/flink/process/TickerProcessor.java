@@ -2,8 +2,8 @@ package com.ganten.market.flink.process;
 
 import java.math.BigDecimal;
 import org.apache.flink.api.common.functions.AggregateFunction;
-import com.ganten.market.common.flink.TickAccumulator;
-import com.ganten.market.common.flink.Trade;
+import com.ganten.market.common.flink.input.Trade;
+import com.ganten.market.common.flink.mediate.TickAccumulator;
 
 /**
  * ProcessWindowFunction to compute Tick data from TickAccumulator.
@@ -12,7 +12,7 @@ import com.ganten.market.common.flink.Trade;
  * @param <ACC> – The type of the accumulator: {@link TickAccumulator}
  * @param <OUT> The type of the output value: {@link TickAccumulator}
  */
-public class TickAggregator implements AggregateFunction<Trade, TickAccumulator, TickAccumulator> {
+public class TickerProcessor implements AggregateFunction<Trade, TickAccumulator, TickAccumulator> {
 
     @Override
     public TickAccumulator createAccumulator() {

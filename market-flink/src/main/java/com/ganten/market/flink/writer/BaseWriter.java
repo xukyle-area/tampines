@@ -3,10 +3,10 @@ package com.ganten.market.flink.writer;
 
 import com.ganten.market.common.enums.Contract;
 import com.ganten.market.common.enums.Market;
-import com.ganten.market.common.flink.Candle;
-import com.ganten.market.common.flink.OrderBook;
-import com.ganten.market.common.flink.Tick;
-import com.ganten.market.common.flink.Trade;
+import com.ganten.market.common.flink.input.Trade;
+import com.ganten.market.common.flink.output.Candle;
+import com.ganten.market.common.flink.output.OrderBook;
+import com.ganten.market.common.flink.output.Tick;
 
 public interface BaseWriter {
 

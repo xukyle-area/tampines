@@ -31,10 +31,10 @@ public class KeyGenerator {
         return Joiner.on(SEPARATOR).join(ORDERBOOK, market, contract, side);
     }
 
-    private static final String TICK = "tick";
+    private static final String TICKER = "ticker";
 
-    public static String tickKey(Market market, Contract contract) {
-        return Joiner.on(SEPARATOR).join(TICK, market, contract);
+    public static String tickerKey(Market market, Contract contract) {
+        return Joiner.on(SEPARATOR).join(TICKER, market, contract);
     }
 
 

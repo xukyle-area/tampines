@@ -10,8 +10,8 @@ import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.ganten.market.common.flink.Candle;
-import com.ganten.market.common.flink.Trade;
+import com.ganten.market.common.flink.input.Trade;
+import com.ganten.market.common.flink.output.Candle;
 
 /**
  * @param <IN>  The type of the input value: {@link Trade}
@@ -19,10 +19,10 @@ import com.ganten.market.common.flink.Trade;
  * @param <KEY> The type of the key: {@link Long}
  * @param <W>   The type of {@code Window} that this window function can be applied on: {@link TimeWindow}
  */
-public class CandleCalculator extends ProcessWindowFunction<Trade, Candle, Long, TimeWindow> {
+public class CandleProcessor extends ProcessWindowFunction<Trade, Candle, Long, TimeWindow> {
     private static final long serialVersionUID = -3539822931681340622L;
 
-    private static final Logger logger = LoggerFactory.getLogger(CandleCalculator.class);
+    private static final Logger logger = LoggerFactory.getLogger(CandleProcessor.class);
 
     @Override
     public void open(Configuration config) {}

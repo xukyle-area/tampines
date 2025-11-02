@@ -1,5 +1,8 @@
 package com.ganten.market.common.enums;
 
 public enum Side {
-    ASK, BID;
+    // sell side
+    ASK,
+    // buy side
+    BID;
 }

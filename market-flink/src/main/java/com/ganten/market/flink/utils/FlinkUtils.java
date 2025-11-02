@@ -4,7 +4,7 @@ import org.apache.flink.contrib.streaming.state.EmbeddedRocksDBStateBackend;
 import org.apache.flink.streaming.api.environment.CheckpointConfig;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import com.ganten.market.common.constants.Constants;
-import com.ganten.market.flink.InputConfig;
+import com.ganten.market.flink.config.InputConfig;
 
 public final class FlinkUtils {
 

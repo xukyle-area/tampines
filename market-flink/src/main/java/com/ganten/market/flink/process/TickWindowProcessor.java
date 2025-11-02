@@ -6,8 +6,8 @@ import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
 import com.ganten.market.common.enums.Contract;
-import com.ganten.market.common.flink.Tick;
-import com.ganten.market.common.flink.TickAccumulator;
+import com.ganten.market.common.flink.mediate.TickAccumulator;
+import com.ganten.market.common.flink.output.Tick;
 
 
 /**
@@ -17,7 +17,7 @@ import com.ganten.market.common.flink.TickAccumulator;
  * @param <OUT> The type of the output value: {@link Tick}
  * @param <KEY> The type of the key: {@link Contract}
  */
-public class TickWindowFunction extends ProcessWindowFunction<TickAccumulator, Tick, Long, TimeWindow> {
+public class TickWindowProcessor extends ProcessWindowFunction<TickAccumulator, Tick, Long, TimeWindow> {
     @Override
     public void process(Long contractId, Context ctx, Iterable<TickAccumulator> elements, Collector<Tick> out) {
         TickAccumulator acc = elements.iterator().next();

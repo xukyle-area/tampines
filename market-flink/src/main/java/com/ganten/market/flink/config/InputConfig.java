@@ -1,4 +1,4 @@
-package com.ganten.market.flink;
+package com.ganten.market.flink.config;
 
 import lombok.Data;
 
