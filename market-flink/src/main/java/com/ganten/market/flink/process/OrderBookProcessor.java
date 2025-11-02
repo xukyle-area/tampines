@@ -1,20 +1,31 @@
 package com.ganten.market.flink.process;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import org.apache.flink.api.common.state.MapState;
 import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
 import com.ganten.market.common.enums.Action;
+import com.ganten.market.common.enums.Contract;
 import com.ganten.market.common.enums.Side;
 import com.ganten.market.common.flink.input.Order;
 import com.ganten.market.common.flink.output.OrderBook;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class OrderBookProcessor extends KeyedProcessFunction<Long, Order, OrderBook> {
 
     private final int resolution;
+    private double grouping;
 
+
+    /**
+     * resolution 的取值为: 1,5,10,100
+     * 含义为几倍的 tickSize
+     * @param resolution
+     */
     public OrderBookProcessor(int resolution) {
         this.resolution = resolution;
     }
@@ -32,28 +43,31 @@ public class OrderBookProcessor extends KeyedProcessFunction<Long, Order, OrderB
 
     @Override
     public void processElement(Order order, Context ctx, Collector<OrderBook> out) throws Exception {
+        Contract contract = Contract.getContractById(order.getContractId());
+        this.grouping = contract.getTickSize() * resolution;
         MapState<BigDecimal, BigDecimal> sideState = Side.BID.name().equals(order.getSide()) ? bidState : askState;
 
         BigDecimal price = order.getPrice();
+        BigDecimal groupedPrice = this.groupPrice(price, this.grouping);
         BigDecimal quantity = order.getQuantity();
-        BigDecimal currentQuantity = sideState.get(price);
+        BigDecimal currentQuantity = sideState.get(groupedPrice);
 
-        System.out.println(
-                "Processing order: " + order.getAction() + " " + order.getSide() + " " + price + " qty:" + quantity);
+        log.info("Processing order: {} {} {} (grouped: {}) qty: {}", order.getAction(), order.getSide(), price,
+                groupedPrice, quantity);
 
         if (Action.INSERT.name().equals(order.getAction())) {
             BigDecimal newQuantity = currentQuantity != null ? currentQuantity.add(quantity) : quantity;
-            sideState.put(price, newQuantity);
-            System.out.println("INSERT: " + order.getSide() + " " + price + " -> " + newQuantity);
+            sideState.put(groupedPrice, newQuantity);
+            log.info("INSERT: {} {} -> {}", order.getSide(), groupedPrice, newQuantity);
         } else if (Action.DELETE.name().equals(order.getAction())) {
             if (currentQuantity != null) {
                 BigDecimal newQuantity = currentQuantity.subtract(quantity);
                 if (newQuantity.compareTo(BigDecimal.ZERO) <= 0) {
-                    sideState.remove(price);
-                    System.out.println("DELETE: " + order.getSide() + " " + price + " removed");
+                    sideState.remove(groupedPrice);
+                    log.info("DELETE: {} {} removed", order.getSide(), groupedPrice);
                 } else {
-                    sideState.put(price, newQuantity);
-                    System.out.println("DELETE: " + order.getSide() + " " + price + " -> " + newQuantity);
+                    sideState.put(groupedPrice, newQuantity);
+                    log.info("DELETE: {} {} -> {}", order.getSide(), groupedPrice, newQuantity);
                 }
             }
         }
@@ -65,20 +79,36 @@ public class OrderBookProcessor extends KeyedProcessFunction<Long, Order, OrderB
 
     @Override
     public void onTimer(long timestamp, OnTimerContext ctx, Collector<OrderBook> out) throws Exception {
-        // 构建并输出订单簿
+        // 构建并输出订单簿，直接使用分组后的价格
         OrderBook orderBook = new OrderBook();
-        for (BigDecimal price : bidState.keys())
-            orderBook.getBids().put(price, bidState.get(price));
-        for (BigDecimal price : askState.keys())
-            orderBook.getAsks().put(price, askState.get(price));
+
+        // 直接使用 MapState 中的分组后数据
+        for (java.util.Map.Entry<BigDecimal, BigDecimal> entry : bidState.entries()) {
+            orderBook.getBids().put(entry.getKey(), entry.getValue());
+        }
+        for (java.util.Map.Entry<BigDecimal, BigDecimal> entry : askState.entries()) {
+            orderBook.getAsks().put(entry.getKey(), entry.getValue());
+        }
+
         orderBook.setContractId(ctx.getCurrentKey());
 
-        System.out.println("Timer triggered for contract " + ctx.getCurrentKey() + ", Bids: "
-                + orderBook.getBids().size() + ", Asks: " + orderBook.getAsks().size());
+        log.info("Timer triggered for contract {}, Bids: {}, Asks: {}", ctx.getCurrentKey(), orderBook.getBids().size(),
+                orderBook.getAsks().size());
 
         out.collect(orderBook);
 
         // 注册下一个定时器
         ctx.timerService().registerProcessingTimeTimer(timestamp + 1000);
+    }
+
+    /**
+     * 根据grouping对价格进行分组
+     */
+    private BigDecimal groupPrice(BigDecimal price, double grouping) {
+        if (grouping == 0.0) {
+            return price;
+        }
+        BigDecimal group = BigDecimal.valueOf(grouping);
+        return price.divide(group, 0, RoundingMode.FLOOR).multiply(group);
     }
 }

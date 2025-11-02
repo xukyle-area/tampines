@@ -1,26 +1,25 @@
 package com.ganten.market.common.enums;
 
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import com.ganten.market.common.model.CurrencyPair;
 import lombok.Getter;
 
 @Getter
 public enum Contract {
-    BTC_USD(1L, "BTC", "USDT", "BTCUSDT", "0.01", "1"),
-    ETH_USD(2L, "ETH", "USDT", "ETHUSDT", "0.01", "1"),
-    USDT_USD(3L, "USDT", "USD", "USDTUSD", "0.0001", "1");
+    // btc/usdt
+    BTC_USD(1L, "BTC", "USDT", "BTCUSDT", 0.01, 1),
+    // eth/usdt
+    ETH_USD(2L, "ETH", "USDT", "ETHUSDT", 0.01, 1),
+    // usdt/usd
+    USDT_USD(3L, "USDT", "USD", "USDTUSD", 0.0001, 1);
 
     private Long id;
     private String base;
     private String quote;
     private String symbol;
-    private String tickSize;
-    private String lotSize;
+    private double tickSize;
+    private double lotSize;
 
-    Contract(Long id, String base, String quote, String symbol, String tickSize, String lotSize) {
+    Contract(Long id, String base, String quote, String symbol, double tickSize, double lotSize) {
         this.id = id;
         this.base = base;
         this.quote = quote;
