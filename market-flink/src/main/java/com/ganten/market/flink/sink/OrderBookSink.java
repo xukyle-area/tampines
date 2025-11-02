@@ -8,6 +8,6 @@ public class OrderBookSink extends AbstractSink<OrderBook> {
     public void invoke(OrderBook orderBook, Context context) {
         long contractId = orderBook.getContractId();
         Contract contract = Contract.getContractById(contractId);
-        compositeWriter.updateOrderBook(orderBook.getMarket(), contract, orderBook);
+        compositeWriter.updateOrderBook(orderBook.getMarket(), contract, orderBook.getGrouping(), orderBook);
     }
 }

@@ -1,6 +1,5 @@
 package com.ganten.market.flink.writer;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
@@ -17,7 +16,6 @@ import com.ganten.market.common.flink.output.OrderBook;
 import com.ganten.market.common.flink.output.Tick;
 import com.ganten.market.common.model.PublishMessage;
 import com.ganten.market.common.utils.JsonUtils;
-import com.google.protobuf.ByteString;
 
 /**
  * send message to kafka, use to send mqtt message to client
@@ -26,7 +24,7 @@ public class KafkaWriter implements BaseWriter {
 
     private static final Logger log = LoggerFactory.getLogger(KafkaWriter.class);
 
-    private static final String KAFKA_TOPIC = "mqtt";
+    private static final String KAFKA_TOPIC = "api";
     private static final String TICK_TOPIC = "mqtt/quote/%s/tick";
     private static final String TRADE_TOPIC = "mqtt/quote/%s/trade";
     private static final String CANDLE_TOPIC = "mqtt/quote/%s/candle/?resolution=%s";
@@ -45,11 +43,14 @@ public class KafkaWriter implements BaseWriter {
     }
 
     @Override
-    public void updateOrderBook(Market market, Contract contract, OrderBook orderBook) {
+    public void updateOrderBook(Market market, Contract contract, double grouping, OrderBook orderBook) {
         if (contract == null) {
             return;
         }
-        String mqttTopic = String.format("mqtt/quote/%s/orderBook/?&grouping=0.01", contract.getSymbol());
+        String mqttTopic = String.format("mqtt/quote/%s/orderBook/?&grouping=%s", contract.getSymbol(), grouping);
+        log.info(
+                "KafkaWriter updateOrderBook - market: {}, grouping: {}, contract: {}, orderBook.market: {}, orderBook.grouping: {}, orderBook.contractId: {}",
+                market, grouping, contract, orderBook.getMarket(), orderBook.getGrouping(), orderBook.getContractId());
         this.sendKafkaMessage(mqttTopic, orderBook);
     }
 
@@ -80,9 +81,9 @@ public class KafkaWriter implements BaseWriter {
         PublishMessage publishMessage = new PublishMessage();
         publishMessage.setMqttTopic(mqttTopic);
         publishMessage.setTimestamp(System.currentTimeMillis());
-        publishMessage.setPayload(ByteString.copyFrom(JsonUtils.toJson(msg), StandardCharsets.UTF_8).toByteArray());
+        publishMessage.setPayload(JsonUtils.toJson(msg));
 
-        log.info("do send {}: {}", mqttTopic, JsonUtils.toJson(msg));
+        log.info("do send {}: {}", mqttTopic, publishMessage.getPayload());
         producer.send(new ProducerRecord<>(KAFKA_TOPIC, JsonUtils.toJson(publishMessage)), ((metadata, ex) -> {
             if (ex != null) {
                 log.error("send mqtt error", ex);

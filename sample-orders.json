@@ -1,101 +1,16 @@
 [
     {
         "contractId": 1,
-        "timestamp": 1730500000000,
-        "price": 100.00,
-        "quantity": 10,
-        "amount": 1000.00,
+        "price": 101.03,
+        "quantity": 24,
         "side": "BID",
         "action": "INSERT"
     },
     {
         "contractId": 1,
-        "timestamp": 1730500001000,
-        "price": 99.50,
-        "quantity": 5,
-        "amount": 497.50,
+        "price": 101.03,
+        "quantity": 24,
         "side": "BID",
-        "action": "INSERT"
-    },
-    {
-        "contractId": 1,
-        "timestamp": 1730500002000,
-        "price": 101.00,
-        "quantity": 8,
-        "amount": 808.00,
-        "side": "BID",
-        "action": "INSERT"
-    },
-    {
-        "contractId": 1,
-        "timestamp": 1730500003000,
-        "price": 102.00,
-        "quantity": 12,
-        "amount": 1224.00,
-        "side": "ASK",
-        "action": "INSERT"
-    },
-    {
-        "contractId": 1,
-        "timestamp": 1730500004000,
-        "price": 103.00,
-        "quantity": 6,
-        "amount": 618.00,
-        "side": "ASK",
-        "action": "INSERT"
-    },
-    {
-        "contractId": 1,
-        "timestamp": 1730500005000,
-        "price": 101.50,
-        "quantity": 15,
-        "amount": 1522.50,
-        "side": "ASK",
-        "action": "INSERT"
-    },
-    {
-        "contractId": 1,
-        "timestamp": 1730500006000,
-        "price": 100.00,
-        "quantity": 5,
-        "amount": 500.00,
-        "side": "BID",
-        "action": "INSERT"
-    },
-    {
-        "contractId": 1,
-        "timestamp": 1730500007000,
-        "price": 102.00,
-        "quantity": 7,
-        "amount": 714.00,
-        "side": "ASK",
         "action": "DELETE"
-    },
-    {
-        "contractId": 1,
-        "timestamp": 1730500008000,
-        "price": 100.50,
-        "quantity": 20,
-        "amount": 2010.00,
-        "side": "BID",
-        "action": "INSERT"
-    },
-    {
-        "contractId": 1,
-        "timestamp": 1730500009000,
-        "price": 103.00,
-        "quantity": 6,
-        "amount": 618.00,
-        "side": "ASK",
-        "action": "DELETE"
-    },
-    {
-        "contractId": 1,
-        "timestamp": 1730500010000,
-        "price": 104.00,
-        "quantity": 25,
-        "amount": 2600.00,
-        "side": "ASK",
-        "action": "INSERT"
     }
 ]

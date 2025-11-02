@@ -12,7 +12,7 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = false)
 public class OrderBook extends BaseObject {
     private Market market;
-    private String grouping;
+    private double grouping;
     private long startTime;
     private long lastTime;
     private Map<BigDecimal, BigDecimal> bids = new HashMap<>();

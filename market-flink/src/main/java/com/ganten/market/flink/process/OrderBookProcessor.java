@@ -91,7 +91,10 @@ public class OrderBookProcessor extends KeyedProcessFunction<Long, Order, OrderB
             orderBook.getAsks().put(entry.getKey(), entry.getValue());
         }
         orderBook.setMarket(Market.GANTEN);
+        log.info("set grouping {}", this.grouping);
         orderBook.setContractId(ctx.getCurrentKey());
+        orderBook.setGrouping(this.grouping);
+        orderBook.setMarket(Market.GANTEN);
 
         log.info("Timer triggered for contract {}, Bids: {}, Asks: {}", ctx.getCurrentKey(), orderBook.getBids().size(),
                 orderBook.getAsks().size());

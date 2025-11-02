@@ -1,8 +1,8 @@
 package com.ganten.market.common;
 
 import com.ganten.market.common.enums.Contract;
-import com.ganten.market.common.enums.Side;
 import com.ganten.market.common.enums.Market;
+import com.ganten.market.common.enums.Side;
 import com.google.common.base.Joiner;
 
 public class KeyGenerator {
@@ -27,8 +27,8 @@ public class KeyGenerator {
 
     private static final String ORDERBOOK = "order_book";
 
-    public static String orderBookKey(Market market, Contract contract, Side side) {
-        return Joiner.on(SEPARATOR).join(ORDERBOOK, market, contract, side);
+    public static String orderBookKey(Market market, Contract contract, Side side, double grouping) {
+        return Joiner.on(SEPARATOR).join(ORDERBOOK, market, contract, side, grouping);
     }
 
     private static final String TICKER = "ticker";

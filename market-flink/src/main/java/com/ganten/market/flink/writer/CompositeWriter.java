@@ -35,8 +35,8 @@ public class CompositeWriter implements BaseWriter {
         this.write(w -> w.updateTick(market, contract, tick), UPDATE_TICK);
     }
 
-    public void updateOrderBook(Market market, Contract contract, OrderBook orderBook) {
-        this.write(w -> w.updateOrderBook(market, contract, orderBook), UPDATE_ORDER_BOOK);
+    public void updateOrderBook(Market market, Contract contract, double grouping, OrderBook orderBook) {
+        this.write(w -> w.updateOrderBook(market, contract, grouping, orderBook), UPDATE_ORDER_BOOK);
     }
 
     public void updateTrade(Market market, Contract contract, Trade tradeInfo) {

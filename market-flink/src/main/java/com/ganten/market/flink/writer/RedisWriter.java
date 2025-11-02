@@ -33,9 +33,9 @@ public class RedisWriter implements BaseWriter {
     }
 
     @Override
-    public void updateOrderBook(Market market, Contract contract, OrderBook orderBook) {
-        final String askKey = KeyGenerator.orderBookKey(market, contract, Side.ASK);
-        final String bidKey = KeyGenerator.orderBookKey(market, contract, Side.BID);
+    public void updateOrderBook(Market market, Contract contract, double grouping, OrderBook orderBook) {
+        final String askKey = KeyGenerator.orderBookKey(market, contract, Side.ASK, grouping);
+        final String bidKey = KeyGenerator.orderBookKey(market, contract, Side.BID, grouping);
 
         try (Jedis jedis = RedisClient.getResource()) {
             // 存储买单（BID）

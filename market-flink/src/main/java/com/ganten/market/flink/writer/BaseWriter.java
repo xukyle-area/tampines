@@ -18,7 +18,7 @@ public interface BaseWriter {
      */
     default void updateTick(Market market, Contract contract, Tick tick) {}
 
-    default void updateOrderBook(Market market, Contract contract, OrderBook orderBook) {}
+    default void updateOrderBook(Market market, Contract contract, double grouping, OrderBook orderBook) {}
 
     default void updateTrade(Market market, Contract contract, Trade tradeInfo) {}
 
