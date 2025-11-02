@@ -8,9 +8,9 @@
     },
     {
         "contractId": 1,
-        "price": 101.03,
-        "quantity": 24,
-        "side": "BID",
+        "price": 101.50,
+        "quantity": 10,
+        "side": "ASK",
         "action": "DELETE"
     }
 ]

@@ -80,22 +80,22 @@ class OrderBookDisplay:
         table.add_column("价格", style="white", justify="right", min_width=12)
         table.add_column("数量", style="white", justify="right", min_width=10)
 
-        # 添加买单数据（从高到低）
-        bid_prices = sorted([float(p) for p in bids.keys()], reverse=True)
-        for price in bid_prices:
-            original_key = next(k for k in bids.keys() if float(k) == price)
-            qty = bids[original_key]
-            prev_qty = previous_bids.get(original_key, 0)
+        # 添加卖单数据（从高到低）
+        ask_prices = sorted([float(p) for p in asks.keys()], reverse=True)
+        for price in ask_prices:
+            original_key = next(k for k in asks.keys() if float(k) == price)
+            qty = asks[original_key]
+            prev_qty = previous_asks.get(original_key, 0)
             
             if qty > prev_qty:
-                style = "rgb(144,238,144)"  # 浅绿色背景 (light green)
+                style = "rgb(0,255,0)"
             elif qty < prev_qty:
-                style = "rgb(255,182,193)"  # 浅红色背景 (light red)
+                style = "rgb(255,0,0)"
             else:
                 style = "white"
             
             table.add_row(
-                Text("买单", style="bold white"),
+                Text("卖单", style="bold white"),
                 Text(f"{price:.2f}", style=style),
                 Text(f"{qty}", style=style)
             )
@@ -103,23 +103,23 @@ class OrderBookDisplay:
         # 添加分隔行
         table.add_row("━━━━━", "━━━━━", "━━━━━")
 
-        # 添加卖单数据（从低到高）
-        ask_prices = sorted([float(p) for p in asks.keys()])
-        for price in ask_prices:
-            original_key = next(k for k in asks.keys() if float(k) == price)
-            qty = asks[original_key]
-            prev_qty = previous_asks.get(original_key, 0)
+        # 添加买单数据（从高到低）
+        bid_prices = sorted([float(p) for p in bids.keys()], reverse=True)
+        for price in bid_prices:
+            original_key = next(k for k in bids.keys() if float(k) == price)
+            qty = bids[original_key]
+            prev_qty = previous_bids.get(original_key, 0)
             
-            # 确定样式：增加时浅绿色背景，减少时浅红色背景，不变时白色
+            # 确定样式：增加时浅绿色，减少时浅红色，不变时白色
             if qty > prev_qty:
-                style = "bg:rgb(144,238,144)"  # 浅绿色背景 (light green)
+                style = "rgb(0,255,0)"
             elif qty < prev_qty:
-                style = "bg:rgb(255,182,193)"  # 浅红色背景 (light red)
+                style = "rgb(255,0,0)"
             else:
                 style = "white"
             
             table.add_row(
-                Text("卖单", style="bold white"),
+                Text("买单", style="bold white"),
                 Text(f"{price:.2f}", style=style),
                 Text(f"{qty}", style=style)
             )
@@ -221,7 +221,7 @@ def main():
     # 从环境变量获取配置，如果没有则使用默认值
     bootstrap_servers = os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092')
     topic = os.getenv('KAFKA_TOPIC', 'api')
-    target_grouping = float(os.getenv('ORDERBOOK_GROUPING', '0.01'))  # 默认显示 0.01 分组
+    target_grouping = float(os.getenv('ORDERBOOK_GROUPING', '0.1'))  # 默认显示 0.1 分组
 
     display = OrderBookDisplay(bootstrap_servers, topic, target_grouping)
     display.run()
