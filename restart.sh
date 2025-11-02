@@ -51,45 +51,81 @@ echo ""
 
 # 3. 获取最新的checkpoint目录（在作业取消完成后）
 echo "查找最新的checkpoint..."
-# 先找到最新的作业目录
-LATEST_JOB_DIR=$(ls -t /tmp/flink-checkpoints/$job_name 2>/dev/null | head -1)
+# 查找所有作业目录中的最新checkpoint
+JOB_DIRS=$(ls -t /tmp/flink-checkpoints/$job_name 2>/dev/null)
 
-if [ -z "$LATEST_JOB_DIR" ]; then
-    echo "错误: 没有找到checkpoint作业目录"
-    exit 1
+if [ -z "$JOB_DIRS" ]; then
+    echo "错误: 没有找到任何checkpoint作业目录"
+    HAS_CHECKPOINT=false
+else
+    LATEST_CHECKPOINT_DIR=""
+    LATEST_CHECKPOINT_TIME=0
+
+    for job_dir in $JOB_DIRS; do
+        if [ -d "/tmp/flink-checkpoints/$job_name/$job_dir" ]; then
+            echo "检查作业目录: $job_dir"
+            POSSIBLE_CHECKPOINTS=$(ls -t "/tmp/flink-checkpoints/$job_name/$job_dir" 2>/dev/null)
+            for chk_dir in $POSSIBLE_CHECKPOINTS; do
+                chk_path="/tmp/flink-checkpoints/$job_name/$job_dir/$chk_dir"
+                if [ -d "$chk_path" ] && [ -f "$chk_path/_metadata" ]; then
+                    # 获取修改时间 (macOS使用stat -f %m, Linux使用stat -c %Y)
+                    chk_time=$(stat -f %m "$chk_path" 2>/dev/null || stat -c %Y "$chk_path" 2>/dev/null || date -r "$chk_path" +%s 2>/dev/null || echo 0)
+                    if [ "$chk_time" -gt "$LATEST_CHECKPOINT_TIME" ]; then
+                        LATEST_CHECKPOINT_TIME=$chk_time
+                        LATEST_CHECKPOINT_DIR="$chk_path"
+                        echo "找到更新的checkpoint: $chk_path"
+                    fi
+                    break  # 每个作业目录只检查最新的checkpoint
+                fi
+            done
+        fi
+    done
+
+    if [ -z "$LATEST_CHECKPOINT_DIR" ]; then
+        echo "警告: 在所有作业目录中都没有找到有效的checkpoint目录"
+        HAS_CHECKPOINT=false
+    else
+        HAS_CHECKPOINT=true
+        echo "使用全局最新的checkpoint目录: $LATEST_CHECKPOINT_DIR"
+    fi
 fi
-
-# 在最新的作业目录中找到最新的checkpoint目录
-LATEST_CHECKPOINT_DIR=$(ls -t "/tmp/flink-checkpoints/$job_name/$LATEST_JOB_DIR" 2>/dev/null | grep "^chk-" | head -1)
-
-if [ -z "$LATEST_CHECKPOINT_DIR" ]; then
-    echo "错误: 在作业目录 $LATEST_JOB_DIR 中没有找到checkpoint"
-    exit 1
-fi
-
-LATEST_CHECKPOINT_DIR="/tmp/flink-checkpoints/$job_name/$LATEST_JOB_DIR/$LATEST_CHECKPOINT_DIR"
-
-if [ ! -f "$LATEST_CHECKPOINT_DIR/_metadata" ]; then
-    echo "错误: checkpoint目录 $LATEST_CHECKPOINT_DIR 中没有_metadata文件"
-    exit 1
-fi
-
-echo "使用最新的checkpoint目录: $LATEST_CHECKPOINT_DIR"
 echo ""
 
-# 4. 从checkpoint恢复作业
-echo "正在从checkpoint恢复作业..."
-flink run -s "file://$LATEST_CHECKPOINT_DIR" \
-    -c "$main_class" \
-    "$jar_file" >/dev/null 2>&1 &
+# 4. 启动或恢复作业
+if [ "$HAS_CHECKPOINT" = true ]; then
+    echo "正在从checkpoint恢复作业..."
+    flink run -s "file://$LATEST_CHECKPOINT_DIR" \
+        -c "$main_class" \
+        "$jar_file" >/dev/null 2>&1 &
     echo "从checkpoint恢复成功！"
-    sleep 5  # 等待作业完全启动
+else
+    echo "正在启动新作业..."
+    flink run -c "$main_class" \
+        "$jar_file" >/dev/null 2>&1 &
+    echo "新作业启动成功！"
+fi
 
-    if flink list | grep -q "$job_name_job.*RUNNING"; then
-        echo "作业状态确认: 运行中"
-    else
-        echo "警告: 作业可能启动失败，请检查flink list"
-    fi
+sleep 5  # 等待作业完全启动
+
+# 获取新启动的作业ID
+NEW_JOB_ID=$(flink list | grep "$job_name_job.*RUNNING" | awk -F' : ' '{print $2}' | tr -d ' ')
+if [ -n "$NEW_JOB_ID" ]; then
+    echo "新作业ID: $NEW_JOB_ID"
+    echo "作业状态确认: 运行中"
+else
+    echo "警告: 作业可能启动失败"
+    echo "当前Flink作业列表:"
+    flink list
+    echo ""
+    echo "最近的作业运行历史:"
+    flink list -r 2>/dev/null || echo "无法获取作业历史"
+    echo ""
+    echo "可能的解决方案:"
+    echo "1. 检查Flink集群资源是否充足 (TaskManager数量和slot配置)"
+    echo "2. 启动更多的TaskManager: ./bin/start-cluster.sh"
+    echo "3. 检查Flink配置文件中的并行度设置"
+    echo "4. 查看Flink Web UI了解集群状态"
+fi
 
 
 echo ""
