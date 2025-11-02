@@ -2,6 +2,7 @@
 # restart-flink-job.sh - 自动重启Flink作业并从最新checkpoint恢复
 
 job_name="orderbook"
+job_name_job="orderbook-job"
 main_class="com.ganten.market.flink.job.OrderbookJob"
 jar_file="market-flink/target/market-flink-1.0.0-SNAPSHOT.jar"
 
@@ -16,10 +17,10 @@ flink list
 echo ""
 
 # 2. 查找并取消指定作业
-echo "查找 $job_name 作业..."
-JOB_INFOS=$(flink list | grep -i "$job_name-job")
+echo "查找 $job_name_job 作业..."
+JOB_INFOS=$(flink list | grep -i "$job_name_job")
 if [ -n "$JOB_INFOS" ]; then
-    echo "找到以下 $job_name 作业:"
+    echo "找到以下 $job_name_job 作业:"
     echo "$JOB_INFOS"
     echo ""
 
@@ -31,7 +32,7 @@ if [ -n "$JOB_INFOS" ]; then
 
             if [ -n "$JOB_ID" ] && [[ $JOB_ID =~ ^[0-9a-fA-F]{32}$ ]]; then
                 echo "正在取消作业ID: $JOB_ID"
-                timeout 10 flink cancel "$JOB_ID" 2>/dev/null
+                flink cancel "$JOB_ID"
                 echo "作业 $JOB_ID 取消完成"
             else
                 echo "跳过无效作业ID: $JOB_ID"
@@ -48,7 +49,7 @@ fi
 
 echo ""
 
-# 3. 获取最新的checkpoint目录
+# 3. 获取最新的checkpoint目录（在作业取消完成后）
 echo "查找最新的checkpoint..."
 # 先找到最新的作业目录
 LATEST_JOB_DIR=$(ls -t /tmp/flink-checkpoints/$job_name 2>/dev/null | head -1)
@@ -80,7 +81,16 @@ echo ""
 echo "正在从checkpoint恢复作业..."
 flink run -s "file://$LATEST_CHECKPOINT_DIR" \
     -c "$main_class" \
-    "$jar_file" &
+    "$jar_file" >/dev/null 2>&1 &
+    echo "从checkpoint恢复成功！"
+    sleep 5  # 等待作业完全启动
+
+    if flink list | grep -q "$job_name_job.*RUNNING"; then
+        echo "作业状态确认: 运行中"
+    else
+        echo "警告: 作业可能启动失败，请检查flink list"
+    fi
+
 
 echo ""
 echo "作业重启完成！"
