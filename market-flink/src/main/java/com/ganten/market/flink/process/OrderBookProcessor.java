@@ -9,6 +9,7 @@ import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
 import com.ganten.market.common.enums.Action;
 import com.ganten.market.common.enums.Contract;
+import com.ganten.market.common.enums.Market;
 import com.ganten.market.common.enums.Side;
 import com.ganten.market.common.flink.input.Order;
 import com.ganten.market.common.flink.output.OrderBook;
@@ -89,7 +90,7 @@ public class OrderBookProcessor extends KeyedProcessFunction<Long, Order, OrderB
         for (java.util.Map.Entry<BigDecimal, BigDecimal> entry : askState.entries()) {
             orderBook.getAsks().put(entry.getKey(), entry.getValue());
         }
-
+        orderBook.setMarket(Market.GANTEN);
         orderBook.setContractId(ctx.getCurrentKey());
 
         log.info("Timer triggered for contract {}, Bids: {}, Asks: {}", ctx.getCurrentKey(), orderBook.getBids().size(),
