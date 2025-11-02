@@ -87,11 +87,10 @@ class OrderBookDisplay:
             qty = bids[original_key]
             prev_qty = previous_bids.get(original_key, 0)
             
-            # 确定样式：增加时浅绿色背景，减少时浅红色背景，不变时白色
             if qty > prev_qty:
-                style = "bg:rgb(144,238,144)"  # 浅绿色背景 (light green)
+                style = "rgb(144,238,144)"  # 浅绿色背景 (light green)
             elif qty < prev_qty:
-                style = "bg:rgb(255,182,193)"  # 浅红色背景 (light red)
+                style = "rgb(255,182,193)"  # 浅红色背景 (light red)
             else:
                 style = "white"
             
