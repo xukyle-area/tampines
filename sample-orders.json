@@ -4,13 +4,13 @@
         "price": 101.03,
         "quantity": 24,
         "side": "BID",
-        "action": "DELETE"
+        "action": "INSERT"
     },
     {
         "contractId": 1,
         "price": 101.50,
         "quantity": 24,
         "side": "ASK",
-        "action": "DELETE"
+        "action": "INSERT"
     }
 ]

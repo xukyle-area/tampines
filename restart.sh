@@ -63,7 +63,6 @@ else
 
     for job_dir in $JOB_DIRS; do
         if [ -d "/tmp/flink-checkpoints/$job_name/$job_dir" ]; then
-            echo "检查作业目录: $job_dir"
             POSSIBLE_CHECKPOINTS=$(ls -t "/tmp/flink-checkpoints/$job_name/$job_dir" 2>/dev/null)
             for chk_dir in $POSSIBLE_CHECKPOINTS; do
                 chk_path="/tmp/flink-checkpoints/$job_name/$job_dir/$chk_dir"
