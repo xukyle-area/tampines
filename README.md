@@ -260,7 +260,7 @@ tail -f $FLINK_HOME/log/flink-*.log
 
 ```bash
 # 提交作业（指定主类）
-flink run -c com.ganten.market.flink.TickJob target/market-flink-1.0.0-SNAPSHOT.jar
+flink run -c com.ganten.market.flink.job.TickJob target/market-flink-1.0.0-SNAPSHOT.jar
 
 # 列出运行中的作业
 flink list -r

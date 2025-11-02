@@ -33,9 +33,9 @@ public final class OrderbookJob {
         KeyedStream<Order, Long> keyedStream = orderStream.keyBy(Order::getContractId);
 
         // build a
-        keyedStream.process(new OrderBookProcessor()).name(JOB_NAME).uid(JOB_NAME).setParallelism(ONE)
-                .addSink(new OrderBookSink()).name(JOB_NAME).uid(JOB_NAME).setParallelism(ONE);
-        see.execute(JOB_NAME);
+        keyedStream.process(new OrderBookProcessor()).name(JOB_NAME).uid(JOB_NAME + "-process").setParallelism(ONE)
+                .addSink(new OrderBookSink()).name(JOB_NAME).uid(JOB_NAME + "-sink").setParallelism(ONE);
+        see.execute(JOB_NAME + "-job");
     }
 
 }
