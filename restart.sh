@@ -1,9 +1,17 @@
 #!/bin/bash
 # restart-flink-job.sh - 自动重启Flink作业并从最新checkpoint恢复
 
-job_name="orderbook"
-job_name_job="orderbook-job"
-main_class="com.ganten.market.flink.job.OrderbookJob"
+# orderbook
+# job_name="orderbook"
+# job_name_job="orderbook-job"
+# main_class="com.ganten.market.flink.job.OrderbookJob"
+
+# candle
+job_name="candle"
+job_name_job="candle-job"
+main_class="com.ganten.market.flink.job.CandleJob"
+
+# using the same jar file
 jar_file="market-flink/target/market-flink-1.0.0-SNAPSHOT.jar"
 
 echo "=== Flink作业重启脚本 ==="

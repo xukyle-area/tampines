@@ -21,7 +21,7 @@ public final class CandleJob {
     private static final String JOB_NAME = "candle";
     private static final String JOB_TOPIC = "trade";
 
-    private static final int[] RESOLUTIONS = {60, 300, 900, 3600, 21600, 86400};
+    private static final int[] RESOLUTIONS = {60, 300};
 
     /**
      * @param args ["candle.properties"]
@@ -41,7 +41,7 @@ public final class CandleJob {
         for (int resolution : RESOLUTIONS) {
             CandleJob.calculate(keyedStream, resolution);
         }
-        see.execute(JOB_NAME);
+        see.execute(JOB_NAME + "-job");
     }
 
     public static void calculate(KeyedStream<Trade, Long> keyedStream, final int resolution) {
