@@ -9,7 +9,7 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = false)
-public class TickAccumulator extends BaseObject {
+public class TickerAccumulator extends BaseObject {
     private BigDecimal highest = null;
     private BigDecimal lowest = null;
     private BigDecimal volume = BigDecimal.ZERO;

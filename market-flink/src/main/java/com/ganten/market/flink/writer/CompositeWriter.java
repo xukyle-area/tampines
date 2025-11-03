@@ -11,7 +11,7 @@ import com.ganten.market.common.enums.Market;
 import com.ganten.market.common.flink.input.Trade;
 import com.ganten.market.common.flink.output.Candle;
 import com.ganten.market.common.flink.output.OrderBook;
-import com.ganten.market.common.flink.output.Tick;
+import com.ganten.market.common.flink.output.Ticker;
 
 public class CompositeWriter implements BaseWriter {
 
@@ -31,8 +31,8 @@ public class CompositeWriter implements BaseWriter {
         this.writers = Stream.of(mqttWriter, redisWriter).collect(Collectors.toList());
     }
 
-    public void updateTick(Market market, Contract contract, Tick tick) {
-        this.write(w -> w.updateTick(market, contract, tick), UPDATE_TICK);
+    public void updateTicker(Market market, Contract contract, Ticker tick) {
+        this.write(w -> w.updateTicker(market, contract, tick), UPDATE_TICK);
     }
 
     public void updateOrderBook(Market market, Contract contract, double grouping, OrderBook orderBook) {

@@ -8,7 +8,7 @@ import com.ganten.market.common.enums.Side;
 import com.ganten.market.common.flink.input.Trade;
 import com.ganten.market.common.flink.output.Candle;
 import com.ganten.market.common.flink.output.OrderBook;
-import com.ganten.market.common.flink.output.Tick;
+import com.ganten.market.common.flink.output.Ticker;
 import com.ganten.market.common.redis.RedisClient;
 import com.ganten.market.common.utils.ObjectUtils;
 import redis.clients.jedis.Jedis;
@@ -24,11 +24,11 @@ public class RedisWriter implements BaseWriter {
     }
 
     @Override
-    public void updateTick(Market market, Contract contract, Tick tick) {
-        String tickKey = KeyGenerator.tickerKey(market, contract);
+    public void updateTicker(Market market, Contract contract, Ticker ticker) {
+        String tickerKey = KeyGenerator.tickerKey(market, contract);
 
         try (Jedis jedis = RedisClient.getResource()) {
-            jedis.hset(tickKey, ObjectUtils.toStringMap(tick));
+            jedis.hset(tickerKey, ObjectUtils.toStringMap(ticker));
         }
     }
 

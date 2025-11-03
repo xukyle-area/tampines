@@ -50,7 +50,7 @@ public class CryptoSocketClient extends BaseSocketClient {
                 Contract contract = Contract.getContractBySymbol(symbol.split("ticker.")[1].replace("_", ""));
                 RealTimeQuote realTimeQuote = new RealTimeQuote(System.currentTimeMillis(), contract, Market.CRYPTO_COM,
                         data.getLast(), data.getAsk(), data.getBid());
-                log.info("sinking tick to redis.{}", realTimeQuote);
+                log.info("sinking ticker to redis.{}", realTimeQuote);
                 RedisQuoteWriter.updateRealTimeQuote(realTimeQuote);
             } catch (Exception e) {
                 log.error("error during sink.{}", text);

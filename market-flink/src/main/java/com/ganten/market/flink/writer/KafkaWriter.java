@@ -13,7 +13,7 @@ import com.ganten.market.common.enums.Market;
 import com.ganten.market.common.flink.input.Trade;
 import com.ganten.market.common.flink.output.Candle;
 import com.ganten.market.common.flink.output.OrderBook;
-import com.ganten.market.common.flink.output.Tick;
+import com.ganten.market.common.flink.output.Ticker;
 import com.ganten.market.common.model.PublishMessage;
 import com.ganten.market.common.utils.JsonUtils;
 
@@ -25,7 +25,7 @@ public class KafkaWriter implements BaseWriter {
     private static final Logger log = LoggerFactory.getLogger(KafkaWriter.class);
 
     private static final String KAFKA_TOPIC = "api";
-    private static final String TICK_TOPIC = "mqtt/quote/%s/tick";
+    private static final String TICKER_TOPIC = "mqtt/quote/%s/ticker";
     private static final String TRADE_TOPIC = "mqtt/quote/%s/trade";
     private static final String CANDLE_TOPIC = "mqtt/quote/%s/candle/?resolution=%s";
 
@@ -38,8 +38,8 @@ public class KafkaWriter implements BaseWriter {
     }
 
     @Override
-    public void updateTick(Market market, Contract contract, Tick tick) {
-        this.sendKafkaMessage(String.format(TICK_TOPIC, contract), tick);
+    public void updateTicker(Market market, Contract contract, Ticker tick) {
+        this.sendKafkaMessage(String.format(TICKER_TOPIC, contract), tick);
     }
 
     @Override

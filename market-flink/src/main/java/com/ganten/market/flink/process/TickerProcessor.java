@@ -6,21 +6,21 @@ import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
 import com.ganten.market.common.enums.Contract;
-import com.ganten.market.common.flink.mediate.TickAccumulator;
-import com.ganten.market.common.flink.output.Tick;
+import com.ganten.market.common.flink.mediate.TickerAccumulator;
+import com.ganten.market.common.flink.output.Ticker;
 
 
 /**
  * ProcessWindowFunction to compute Tick data from TickAccumulator.
  *
- * @param <IN>  The type of the input value: {@link TickAccumulator}
- * @param <OUT> The type of the output value: {@link Tick}
+ * @param <IN>  The type of the input value: {@link TickerAccumulator}
+ * @param <OUT> The type of the output value: {@link Ticker}
  * @param <KEY> The type of the key: {@link Contract}
  */
-public class TickerProcessor extends ProcessWindowFunction<TickAccumulator, Tick, Long, TimeWindow> {
+public class TickerProcessor extends ProcessWindowFunction<TickerAccumulator, Ticker, Long, TimeWindow> {
     @Override
-    public void process(Long contractId, Context ctx, Iterable<TickAccumulator> elements, Collector<Tick> out) {
-        TickAccumulator acc = elements.iterator().next();
+    public void process(Long contractId, Context ctx, Iterable<TickerAccumulator> elements, Collector<Ticker> out) {
+        TickerAccumulator acc = elements.iterator().next();
         if (acc.getFirstPrice() == null || acc.getLastPrice() == null) {
             return;
         }
@@ -31,14 +31,14 @@ public class TickerProcessor extends ProcessWindowFunction<TickAccumulator, Tick
             percent = change.divide(acc.getFirstPrice(), 4, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100));
         }
 
-        Tick tick = new Tick();
-        tick.setContractId(contractId);
-        tick.setHighest(acc.getHighest());
-        tick.setLowest(acc.getLowest());
-        tick.setVolume(acc.getVolume());
-        tick.setChange(change);
-        tick.setLast(acc.getLastPrice());
-        tick.setChangePercent(percent.setScale(2, RoundingMode.HALF_UP));
-        out.collect(tick);
+        Ticker ticker = new Ticker();
+        ticker.setContractId(contractId);
+        ticker.setHighest(acc.getHighest());
+        ticker.setLowest(acc.getLowest());
+        ticker.setVolume(acc.getVolume());
+        ticker.setChange(change);
+        ticker.setLast(acc.getLastPrice());
+        ticker.setChangePercent(percent.setScale(2, RoundingMode.HALF_UP));
+        out.collect(ticker);
     }
 }

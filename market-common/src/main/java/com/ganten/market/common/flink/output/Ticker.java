@@ -7,7 +7,7 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = false)
-public class Tick extends BaseObject {
+public class Ticker extends BaseObject {
     // {@link OrderbookJob}
     private BigDecimal ask;
     private BigDecimal bid;
