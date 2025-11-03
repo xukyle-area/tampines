@@ -111,6 +111,29 @@ NEW_JOB_ID=$(flink list | grep "$job_name_job.*RUNNING" | awk -F' : ' '{print $2
 if [ -n "$NEW_JOB_ID" ]; then
     echo "新作业ID: $NEW_JOB_ID"
     echo "作业状态确认: 运行中"
+
+    # 清理旧的checkpoint（作业成功启动后）
+    echo "正在清理旧的checkpoint..."
+    if [ "$HAS_CHECKPOINT" = true ]; then
+        # 从checkpoint恢复成功，删除其他旧的作业目录，但保留当前使用的作业目录
+        CURRENT_JOB_DIR=$(dirname "$LATEST_CHECKPOINT_DIR")
+        echo "保留当前使用的作业目录: $CURRENT_JOB_DIR"
+        for job_dir in $JOB_DIRS; do
+            job_path="/tmp/flink-checkpoints/$job_name/$job_dir"
+            if [ -d "$job_path" ] && [ "$job_path" != "$CURRENT_JOB_DIR" ]; then
+                echo "删除旧作业目录: $job_path"
+                rm -rf "$job_path"
+            fi
+        done
+    else
+        # 新启动作业，可以选择删除所有checkpoint节省空间
+        echo "新启动作业，清理所有旧checkpoint..."
+        if [ -d "/tmp/flink-checkpoints/$job_name" ]; then
+            echo "删除checkpoint目录: /tmp/flink-checkpoints/$job_name"
+            rm -rf "/tmp/flink-checkpoints/$job_name"
+        fi
+    fi
+    echo "checkpoint清理完成"
 else
     echo "警告: 作业可能启动失败"
     echo "当前Flink作业列表:"
