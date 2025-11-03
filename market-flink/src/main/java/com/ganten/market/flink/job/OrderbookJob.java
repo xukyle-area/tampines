@@ -19,7 +19,7 @@ public final class OrderbookJob {
 
     private static final String JOB_NAME = "orderbook";
     private static final String JOB_TOPIC = "order";
-    private static final int[] RESOLUTIONS = {1, 5, 10, 100};
+    private static final int[] RESOLUTIONS = {1, 5};
 
     public static void main(String[] args) throws Exception {
         InputConfig inputConfig = InputConfig.build(JOB_TOPIC, JOB_NAME);
@@ -40,14 +40,16 @@ public final class OrderbookJob {
     }
 
     private static void calculate(KeyedStream<Order, Long> keyedStream, final int resolution) {
+        String processName = JOB_NAME + "-process-" + resolution;
+        String sinkName = JOB_NAME + "-sink-" + resolution;
         keyedStream
                 // add process orderbook
                 .process(new OrderBookProcessor(resolution))
                 // set job name and uid
-                .name(JOB_NAME).uid(JOB_NAME + "-process-" + resolution).setParallelism(ONE)
+                .name(processName).uid(processName).setParallelism(ONE)
                 // sink orderbook to redis
                 .addSink(new OrderBookSink())
                 // set job name and uid
-                .name(JOB_NAME).uid(JOB_NAME + "-sink-" + resolution).setParallelism(ONE);
+                .name(sinkName).uid(sinkName).setParallelism(ONE);
     }
 }

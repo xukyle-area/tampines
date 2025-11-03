@@ -1,15 +1,19 @@
 #!/bin/bash
 # restart-flink-job.sh - 自动重启Flink作业并从最新checkpoint恢复
+selector=$1
 
-# orderbook
-# job_name="orderbook"
-# job_name_job="orderbook-job"
-# main_class="com.ganten.market.flink.job.OrderbookJob"
-
-# candle
-job_name="candle"
-job_name_job="candle-job"
-main_class="com.ganten.market.flink.job.CandleJob"
+if [ "$selector" == "orderbook" ]; then
+    job_name="orderbook"
+    job_name_job="orderbook-job"
+    main_class="com.ganten.market.flink.job.OrderbookJob"
+elif [ "$selector" == "candle" ]; then
+    job_name="candle"
+    job_name_job="candle-job"
+    main_class="com.ganten.market.flink.job.CandleJob"
+else
+    echo "错误: 未知的作业选择器 '$selector'. 可用选项: orderbook, candle"
+    exit 1
+fi
 
 # using the same jar file
 jar_file="market-flink/target/market-flink-1.0.0-SNAPSHOT.jar"

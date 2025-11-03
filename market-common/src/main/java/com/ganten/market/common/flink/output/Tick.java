@@ -17,5 +17,5 @@ public class Tick extends BaseObject {
     private BigDecimal highest;
     private BigDecimal lowest;
     private BigDecimal change;
-    private String changePercent;
+    private BigDecimal changePercent;
 }
