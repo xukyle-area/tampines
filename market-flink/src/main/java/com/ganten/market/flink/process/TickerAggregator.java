@@ -23,11 +23,18 @@ public class TickerAggregator implements AggregateFunction<Trade, TickerAccumula
     public TickerAccumulator add(Trade trade, TickerAccumulator acc) {
         BigDecimal price = trade.getPrice();
         BigDecimal vol = trade.getVolume();
+        long tradeTime = trade.getTime();
 
-        if (acc.getFirstPrice() == null) {
+        // 使用时间戳判断首笔和末笔交易
+        if (tradeTime < acc.getFirstTimestamp()) {
+            acc.setFirstTimestamp(tradeTime);
             acc.setFirstPrice(price);
         }
-        acc.setLastPrice(price);
+        if (tradeTime > acc.getLastTimestamp()) {
+            acc.setLastTimestamp(tradeTime);
+            acc.setLastPrice(price);
+        }
+
         acc.setVolume(acc.getVolume().add(vol));
 
         if (acc.getHighest() == null || price.compareTo(acc.getHighest()) > 0) {
@@ -48,8 +55,24 @@ public class TickerAggregator implements AggregateFunction<Trade, TickerAccumula
     @Override
     public TickerAccumulator merge(TickerAccumulator a, TickerAccumulator b) {
         TickerAccumulator merged = new TickerAccumulator();
-        merged.setFirstPrice(a.getFirstPrice() != null ? a.getFirstPrice() : b.getFirstPrice());
-        merged.setLastPrice(b.getLastPrice() != null ? b.getLastPrice() : a.getLastPrice());
+
+        // 根据时间戳判断哪个累加器包含更早/更晚的交易
+        if (a.getFirstTimestamp() <= b.getFirstTimestamp()) {
+            merged.setFirstPrice(a.getFirstPrice());
+            merged.setFirstTimestamp(a.getFirstTimestamp());
+        } else {
+            merged.setFirstPrice(b.getFirstPrice());
+            merged.setFirstTimestamp(b.getFirstTimestamp());
+        }
+
+        if (a.getLastTimestamp() >= b.getLastTimestamp()) {
+            merged.setLastPrice(a.getLastPrice());
+            merged.setLastTimestamp(a.getLastTimestamp());
+        } else {
+            merged.setLastPrice(b.getLastPrice());
+            merged.setLastTimestamp(b.getLastTimestamp());
+        }
+
         merged.setVolume(a.getVolume().add(b.getVolume()));
         merged.setHighest(max(a.getHighest(), b.getHighest()));
         merged.setLowest(min(a.getLowest(), b.getLowest()));

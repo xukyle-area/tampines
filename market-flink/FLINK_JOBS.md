@@ -286,3 +286,52 @@ private static final int[] RESOLUTIONS = {60, 300, 900, 3600}; // 1分钟、5分
 ```java
 private static final int[] RESOLUTIONS = {1, 5, 10, 100}; // 1x, 5x, 10x, 100x tick size
 ```
+
+---
+
+## 容错与故障恢复
+
+### Checkpoint 配置
+
+所有 Job 默认启用以下容错机制：
+
+| 配置项 | 默认值 | 说明 |
+|--------|--------|------|
+| Checkpoint 间隔 | 10秒 | 每10秒创建一次快照 |
+| 状态后端 | RocksDB | 支持增量 Checkpoint，适合大状态场景 |
+| Checkpoint 存储 | `file:///tmp/flink-checkpoints/{jobName}` | 本地文件系统 |
+| 外部化策略 | RETAIN_ON_CANCELLATION | Job 取消时保留 Checkpoint |
+| Unaligned Checkpoint | 启用 | 减少 Checkpoint 对吞吐量影响 |
+
+### 故障恢复流程
+
+1. **Job 异常退出**：Flink 自动从最近的 Checkpoint 恢复
+2. **状态恢复**：
+   - TickerJob：恢复窗口内的聚合状态
+   - CandleJob：恢复去重状态（已处理的 tradeId）
+   - OrderbookJob：恢复 MapState 中的订单簿状态
+3. **Kafka Offset**：自动回退到 Checkpoint 时的 offset，保证 exactly-once 语义
+
+### 生产环境建议
+
+```bash
+# 环境变量配置
+export KAFKA_BOOTSTRAP_SERVERS=kafka-cluster:9092
+export REDIS_HOST=redis-cluster
+export REDIS_PORT=6379
+export REDIS_PASSWORD=your-password
+
+# Checkpoint 存储建议改为分布式文件系统
+# 在 InputConfig 中配置：
+# checkpointDir = "hdfs:///flink/checkpoints/" + jobName
+# 或
+# checkpointDir = "s3://bucket/flink/checkpoints/" + jobName
+```
+
+### 监控指标
+
+建议关注以下 Flink 指标：
+- `numberOfCompletedCheckpoints`：成功完成的 Checkpoint 数量
+- `lastCheckpointDuration`：最近一次 Checkpoint 耗时
+- `lastCheckpointSize`：最近一次 Checkpoint 大小
+- `numberOfFailedCheckpoints`：失败的 Checkpoint 数量
