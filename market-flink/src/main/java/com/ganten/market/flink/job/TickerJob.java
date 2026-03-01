@@ -7,7 +7,7 @@ import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.windowing.assigners.SlidingEventTimeWindows;
+import org.apache.flink.streaming.api.windowing.assigners.SlidingProcessingTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import com.ganten.market.common.flink.input.Trade;
 import com.ganten.market.flink.config.InputConfig;
@@ -37,8 +37,8 @@ public class TickerJob {
         String processorName = JOB_NAME + "-processor";
         String sinkName = JOB_NAME + "-sink";
         keyedStream
-                // windowing
-                .window(SlidingEventTimeWindows.of(Time.hours(24), Time.seconds(1)))
+                // windowing - 使用 ProcessingTime 窗口（不依赖 Watermark）
+                .window(SlidingProcessingTimeWindows.of(Time.hours(24), Time.seconds(1)))
                 // configure aggregate & process function
                 .aggregate(new TickerAggregator(), new TickerProcessor())
                 // configure processor name and uid
@@ -47,5 +47,7 @@ public class TickerJob {
                 .addSink(new TickerSink())
                 // configure sink name and uid
                 .name(sinkName).uid(sinkName).setParallelism(ONE);
+
+        see.execute(JOB_NAME + "-job");
     }
 }

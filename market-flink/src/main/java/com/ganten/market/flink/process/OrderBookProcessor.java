@@ -5,6 +5,9 @@ import java.math.RoundingMode;
 import java.util.Map;
 import org.apache.flink.api.common.state.MapState;
 import org.apache.flink.api.common.state.MapStateDescriptor;
+import org.apache.flink.api.common.state.ValueState;
+import org.apache.flink.api.common.state.ValueStateDescriptor;
+import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
@@ -34,6 +37,8 @@ public class OrderBookProcessor extends KeyedProcessFunction<Long, Order, OrderB
 
     private MapState<BigDecimal, BigDecimal> bidState;
     private MapState<BigDecimal, BigDecimal> askState;
+    // 跟踪定时器是否已注册，避免重复注册
+    private ValueState<Boolean> timerRegisteredState;
 
     @Override
     public void open(Configuration parameters) throws Exception {
@@ -41,6 +46,8 @@ public class OrderBookProcessor extends KeyedProcessFunction<Long, Order, OrderB
                 .getMapState(new MapStateDescriptor<>(Side.BID.name(), BigDecimal.class, BigDecimal.class));
         askState = getRuntimeContext()
                 .getMapState(new MapStateDescriptor<>(Side.ASK.name(), BigDecimal.class, BigDecimal.class));
+        timerRegisteredState =
+                getRuntimeContext().getState(new ValueStateDescriptor<>("timer-registered", Types.BOOLEAN));
     }
 
     @Override
@@ -74,13 +81,21 @@ public class OrderBookProcessor extends KeyedProcessFunction<Long, Order, OrderB
             }
         }
 
-        // 注册定时器，每秒触发一次
-        long nextTimer = ctx.timerService().currentProcessingTime() / 1000 * 1000 + 1000;
-        ctx.timerService().registerProcessingTimeTimer(nextTimer);
+        // 只在定时器未注册时注册，避免重复注册
+        Boolean timerRegistered = timerRegisteredState.value();
+        if (timerRegistered == null || !timerRegistered) {
+            long nextTimer = ctx.timerService().currentProcessingTime() / 1000 * 1000 + 1000;
+            ctx.timerService().registerProcessingTimeTimer(nextTimer);
+            timerRegisteredState.update(true);
+            log.debug("Registered timer for contract {}", order.getContractId());
+        }
     }
 
     @Override
     public void onTimer(long timestamp, OnTimerContext ctx, Collector<OrderBook> out) throws Exception {
+        // 重置定时器状态
+        timerRegisteredState.update(false);
+
         // 构建并输出订单簿，直接使用分组后的价格
         OrderBook orderBook = new OrderBook();
 
@@ -91,19 +106,25 @@ public class OrderBookProcessor extends KeyedProcessFunction<Long, Order, OrderB
         for (Map.Entry<BigDecimal, BigDecimal> entry : askState.entries()) {
             orderBook.getAsks().put(entry.getKey(), entry.getValue());
         }
-        orderBook.setMarket(Market.GANTEN);
-        log.info("set grouping {}", this.grouping);
-        orderBook.setContractId(ctx.getCurrentKey());
-        orderBook.setGrouping(this.grouping);
-        orderBook.setMarket(Market.GANTEN);
 
-        log.info("Timer triggered for contract {}, Bids: {}, Asks: {}", ctx.getCurrentKey(), orderBook.getBids().size(),
-                orderBook.getAsks().size());
+        // 只有当订单簿有数据时才输出并注册下一个定时器
+        if (!orderBook.getBids().isEmpty() || !orderBook.getAsks().isEmpty()) {
+            orderBook.setMarket(Market.GANTEN);
+            log.info("set grouping {}", this.grouping);
+            orderBook.setContractId(ctx.getCurrentKey());
+            orderBook.setGrouping(this.grouping);
 
-        out.collect(orderBook);
+            log.info("Timer triggered for contract {}, Bids: {}, Asks: {}", ctx.getCurrentKey(),
+                    orderBook.getBids().size(), orderBook.getAsks().size());
 
-        // 注册下一个定时器
-        ctx.timerService().registerProcessingTimeTimer(timestamp + 1000);
+            out.collect(orderBook);
+
+            // 只有有数据时才注册下一个定时器
+            ctx.timerService().registerProcessingTimeTimer(timestamp + 1000);
+            timerRegisteredState.update(true);
+        } else {
+            log.debug("OrderBook is empty for contract {}, skipping output and timer", ctx.getCurrentKey());
+        }
     }
 
     /**

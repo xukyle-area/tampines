@@ -7,7 +7,7 @@ import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import com.ganten.market.common.flink.input.Trade;
 import com.ganten.market.flink.config.InputConfig;
@@ -50,7 +50,8 @@ public final class CandleJob {
         String sinkName = "candle_sink_" + resolution;
         String slotSharingGroup = "candle"; // 使用相同的slot sharing group
 
-        keyedStream.window(TumblingEventTimeWindows.of(Time.seconds(resolution)))
+        // 使用 ProcessingTime 窗口（不依赖 Watermark）
+        keyedStream.window(TumblingProcessingTimeWindows.of(Time.seconds(resolution)))
                 // calculate candle by resolution
                 .process(new CandleProcessor()).name(calculatorName).uid(calculatorName).setParallelism(ONE)
                 // set slot sharing group

@@ -2,6 +2,7 @@ package com.ganten.market.flink.writer;
 
 import java.nio.charset.StandardCharsets;
 import com.ganten.market.common.KeyGenerator;
+import com.ganten.market.common.constants.Constants;
 import com.ganten.market.common.enums.Contract;
 import com.ganten.market.common.enums.Market;
 import com.ganten.market.common.enums.Side;
@@ -20,7 +21,8 @@ public class RedisWriter implements BaseWriter {
     private static final long TRADE_CACHE_TIME = 2 * 24 * 60 * 60 * 1000 + 10 * 60 * 1000;
 
     public RedisWriter() {
-        RedisClient.init("localhost", 6379, "");
+        // 从 Constants 读取配置（Constants 会从环境变量加载）
+        RedisClient.init(Constants.REDIS_HOST, Constants.REDIS_PORT, Constants.REDIS_PASSWORD);
     }
 
     @Override

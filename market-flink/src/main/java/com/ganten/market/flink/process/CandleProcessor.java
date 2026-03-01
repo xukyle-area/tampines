@@ -4,6 +4,12 @@ import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.flink.api.common.state.StateTtlConfig;
+import org.apache.flink.api.common.state.ValueState;
+import org.apache.flink.api.common.state.ValueStateDescriptor;
+import org.apache.flink.api.common.time.Time;
+import org.apache.flink.api.common.typeinfo.TypeHint;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
@@ -24,8 +30,21 @@ public class CandleProcessor extends ProcessWindowFunction<Trade, Candle, Long, 
 
     private static final Logger logger = LoggerFactory.getLogger(CandleProcessor.class);
 
+    // 使用 Flink 状态存储已处理的 trade ID，跨窗口去重
+    private transient ValueState<Set<Long>> processedTradeIdsState;
+
     @Override
-    public void open(Configuration config) {}
+    public void open(Configuration config) {
+        // 配置状态 TTL，1小时后自动清理，避免状态无限增长
+        StateTtlConfig ttlConfig =
+                StateTtlConfig.newBuilder(Time.hours(1)).setUpdateType(StateTtlConfig.UpdateType.OnCreateAndWrite)
+                        .setStateVisibility(StateTtlConfig.StateVisibility.NeverReturnExpired).build();
+
+        ValueStateDescriptor<Set<Long>> descriptor =
+                new ValueStateDescriptor<>("processed-trade-ids", TypeInformation.of(new TypeHint<Set<Long>>() {}));
+        descriptor.enableTimeToLive(ttlConfig);
+        processedTradeIdsState = getRuntimeContext().getState(descriptor);
+    }
 
     /**
      * Calculate candle data from trade events in the window
@@ -47,12 +66,22 @@ public class CandleProcessor extends ProcessWindowFunction<Trade, Candle, Long, 
         BigDecimal low = new BigDecimal(Double.MAX_VALUE);
         BigDecimal volume = BigDecimal.ZERO;
         boolean opened = false;
-        Set<Long> trades = new HashSet<>();
+
+        // 从状态中获取已处理的 trade ID 集合（跨窗口去重）
+        Set<Long> processedIds = processedTradeIdsState.value();
+        if (processedIds == null) {
+            processedIds = new HashSet<>();
+        }
+
         for (Trade tradeInfo : elements) {
             long tradeId = tradeInfo.getId();
-            if (!trades.add(tradeId)) {
+            // 使用状态进行跨窗口去重
+            if (processedIds.contains(tradeId)) {
+                logger.debug("Skipping duplicate trade: {}", tradeId);
                 continue;
             }
+            processedIds.add(tradeId);
+
             final String priceValue = tradeInfo.getPrice().toString();
             final String volumeValue = tradeInfo.getVolume().toString();
             if (!StringUtils.isEmpty(priceValue) && !StringUtils.isEmpty(volumeValue)) {
@@ -72,6 +101,9 @@ public class CandleProcessor extends ProcessWindowFunction<Trade, Candle, Long, 
                 volume = volume.add(curVolume);
             }
         }
+
+        // 更新状态
+        processedTradeIdsState.update(processedIds);
 
         Candle candleData = new Candle();
         candleData.setStartTime(Long.toString(context.window().getStart()));
