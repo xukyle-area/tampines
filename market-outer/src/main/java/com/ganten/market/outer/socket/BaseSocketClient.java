@@ -9,12 +9,15 @@ import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import com.ganten.market.common.enums.Contract;
 import com.ganten.market.common.enums.Market;
+import com.ganten.market.outer.writer.QuoteWriter;
+import com.ganten.market.outer.writer.RedisQuoteWriter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public abstract class BaseSocketClient extends WebSocketClient {
 
     private final Market market;
+    protected final QuoteWriter redisQuoteWriter = new RedisQuoteWriter();
 
     public BaseSocketClient(String serverUri, Market market) throws URISyntaxException {
         super(new URI(serverUri));

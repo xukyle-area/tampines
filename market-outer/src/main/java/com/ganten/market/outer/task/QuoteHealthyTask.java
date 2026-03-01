@@ -29,7 +29,6 @@ public class QuoteHealthyTask {
 
     private static void calculateAllContract() {
         for (Contract contract : Contract.values()) {
-
             Map<Market, BigDecimal> priceMap = QuoteHealthyTask.getPriceMap(contract);
             log.info("Contract {} price map : {}", contract.getSymbol(), priceMap);
             if (priceMap.size() < 2) {

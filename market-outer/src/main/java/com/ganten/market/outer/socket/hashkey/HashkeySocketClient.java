@@ -5,11 +5,10 @@ import java.util.*;
 import java.util.function.Consumer;
 import org.springframework.stereotype.Service;
 import com.ganten.market.common.enums.Contract;
-import com.ganten.market.common.model.RealTimeQuote;
 import com.ganten.market.common.enums.Market;
+import com.ganten.market.common.model.RealTimeQuote;
 import com.ganten.market.common.utils.JsonUtils;
 import com.ganten.market.outer.socket.BaseSocketClient;
-import com.ganten.market.outer.writer.RedisQuoteWriter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -61,7 +60,7 @@ public class HashkeySocketClient extends BaseSocketClient {
                 RealTimeQuote realTimeQuote = new RealTimeQuote(System.currentTimeMillis(), contract, Market.HASHKEY,
                         data.getClose(), null, null);
                 log.info("Hashkey real-time: {}", realTimeQuote);
-                RedisQuoteWriter.updateRealTimeQuote(realTimeQuote);
+                redisQuoteWriter.updateRealTimeQuote(realTimeQuote);
             } catch (Exception e) {
                 log.error("error during sink.{}", text, e);
             }

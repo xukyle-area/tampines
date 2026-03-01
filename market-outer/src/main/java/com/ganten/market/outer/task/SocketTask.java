@@ -10,15 +10,16 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class SocketTask {
 
+    private final SocketConnecter hashkeyConnecter = new SocketConnecter(Market.HASHKEY);
+    private final SocketConnecter cryptoComConnecter = new SocketConnecter(Market.CRYPTO_COM);
+
     @Scheduled(fixedDelay = 90000, initialDelay = 10000)
     public void hashkey() {
-        SocketConnecter hashkeyConnecter = new SocketConnecter(Market.HASHKEY);
         hashkeyConnecter.checkAndSubscribe();
     }
 
     @Scheduled(fixedDelay = 90000, initialDelay = 10000)
     public void cryptoCom() {
-        SocketConnecter cryptoComConnecter = new SocketConnecter(Market.CRYPTO_COM);
         cryptoComConnecter.checkAndSubscribe();
     }
 }

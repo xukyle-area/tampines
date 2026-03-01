@@ -2,6 +2,7 @@ package com.ganten.market.flink.process;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Map;
 import org.apache.flink.api.common.state.MapState;
 import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.configuration.Configuration;
@@ -84,10 +85,10 @@ public class OrderBookProcessor extends KeyedProcessFunction<Long, Order, OrderB
         OrderBook orderBook = new OrderBook();
 
         // 直接使用 MapState 中的分组后数据
-        for (java.util.Map.Entry<BigDecimal, BigDecimal> entry : bidState.entries()) {
+        for (Map.Entry<BigDecimal, BigDecimal> entry : bidState.entries()) {
             orderBook.getBids().put(entry.getKey(), entry.getValue());
         }
-        for (java.util.Map.Entry<BigDecimal, BigDecimal> entry : askState.entries()) {
+        for (Map.Entry<BigDecimal, BigDecimal> entry : askState.entries()) {
             orderBook.getAsks().put(entry.getKey(), entry.getValue());
         }
         orderBook.setMarket(Market.GANTEN);
