@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import com.ganten.market.common.enums.Contract;
 import com.ganten.market.common.model.DayHistoryQuote;
+import com.ganten.market.common.utils.TimestampUtils;
 import com.ganten.market.outer.writer.MysqlQuoteWriter;
 import com.ganten.market.outer.writer.QuoteWriter;
 
@@ -19,7 +20,18 @@ public abstract class BaseHistoryTask {
 
     private QuoteWriter mysqlQuoteWriter = new MysqlQuoteWriter();
 
+    private long lastRunTime = Long.MIN_VALUE;
+
+    /**
+     * 定时任务运行方法
+     *
+     * 每日在指定时间后仅执行一次，获取所有合约最新的日K线数据并更新到MySQL。
+     * 通过lastRunTime确保每天只更新一次。
+     */
     public void run() {
+        if (lastRunTime > TimestampUtils.midnightTimestampToday() + 2 * 3600_000) {
+            return;
+        }
         for (Contract symbol : Contract.values()) {
             List<DayHistoryQuote> latestDayCandles = this.getLatestDayCandle(symbol, 1);
             if (latestDayCandles == null || latestDayCandles.isEmpty()) {
@@ -27,6 +39,7 @@ public abstract class BaseHistoryTask {
             }
             mysqlQuoteWriter.updateHistoryQuote(latestDayCandles.get(0));
         }
+        lastRunTime = System.currentTimeMillis();
     }
 
     /**

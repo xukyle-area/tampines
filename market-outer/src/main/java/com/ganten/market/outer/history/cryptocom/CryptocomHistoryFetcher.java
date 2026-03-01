@@ -97,18 +97,4 @@ public class CryptocomHistoryFetcher {
 
         return klines;
     }
-
-    /**
-     * 测试入口
-     */
-    public static void main(String[] args) {
-        try {
-            List<CryptocomKline> klines = fetchKlines("BTC_USDT", "1D", 3);
-            for (CryptocomKline kline : klines) {
-                System.out.println(kline);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 }

@@ -16,7 +16,7 @@ import redis.clients.jedis.Jedis;
 
 @Slf4j
 @Service
-public class QuoteHealthyTask {
+public class HealthyTask {
 
     static {
         // 初始化将在Spring上下文加载后通过setter设置
@@ -24,17 +24,17 @@ public class QuoteHealthyTask {
 
     @Scheduled(fixedRate = 30000)
     public void run() {
-        QuoteHealthyTask.calculateAllContract();
+        HealthyTask.calculateAllContract();
     }
 
     private static void calculateAllContract() {
         for (Contract contract : Contract.values()) {
-            Map<Market, BigDecimal> priceMap = QuoteHealthyTask.getPriceMap(contract);
+            Map<Market, BigDecimal> priceMap = HealthyTask.getPriceMap(contract);
             log.info("Contract {} price map : {}", contract.getSymbol(), priceMap);
             if (priceMap.size() < 2) {
                 continue;
             }
-            BigDecimal std = QuoteHealthyTask.calculateStd(priceMap);
+            BigDecimal std = HealthyTask.calculateStd(priceMap);
             log.info("Contract {} std rate: {}", contract.getSymbol(), std.toPlainString());
         }
     }

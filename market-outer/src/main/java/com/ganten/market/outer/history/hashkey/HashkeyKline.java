@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-class Kline {
+class HashkeyKline {
     /**
      * K线开盘时间戳（毫秒）
      */
@@ -83,11 +83,11 @@ class Kline {
      * 从Hashkey API返回的数组解析Kline对象
      * 数组格式: [openTime, open, high, low, close, volume, closeTime, quoteVolume, trades, takerBuyBase, takerBuyQuote]
      */
-    public static Kline fromArray(Object[] arr) {
+    public static HashkeyKline fromArray(Object[] arr) {
         if (arr == null || arr.length < 11) {
             throw new IllegalArgumentException("Invalid kline array data");
         }
-        return Kline.builder().openTime(parseLong(arr[0])).openPrice(parseBigDecimal(arr[1]))
+        return HashkeyKline.builder().openTime(parseLong(arr[0])).openPrice(parseBigDecimal(arr[1]))
                 .highPrice(parseBigDecimal(arr[2])).lowPrice(parseBigDecimal(arr[3]))
                 .closePrice(parseBigDecimal(arr[4])).volume(parseBigDecimal(arr[5])).closeTime(parseLong(arr[6]))
                 .quoteAssetVolume(parseBigDecimal(arr[7])).numberOfTrades(parseInteger(arr[8]))

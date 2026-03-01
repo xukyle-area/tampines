@@ -28,7 +28,7 @@ public class HashkeyHistoryFetcher {
      * @param limit    返回数量限制
      * @return K线数据列表
      */
-    public static List<Kline> fetchKlines(String symbol, String interval, int limit) throws IOException {
+    public static List<HashkeyKline> fetchKlines(String symbol, String interval, int limit) throws IOException {
         return fetchKlines(symbol, interval, limit, null, null);
     }
 
@@ -42,8 +42,8 @@ public class HashkeyHistoryFetcher {
      * @param endTime   结束时间戳（毫秒），可为null
      * @return K线数据列表
      */
-    public static List<Kline> fetchKlines(String symbol, String interval, int limit, Long startTime, Long endTime)
-            throws IOException {
+    public static List<HashkeyKline> fetchKlines(String symbol, String interval, int limit, Long startTime,
+            Long endTime) throws IOException {
         Map<String, String> params = new HashMap<>();
         params.put("symbol", symbol);
         params.put("interval", interval);
@@ -70,33 +70,19 @@ public class HashkeyHistoryFetcher {
     /**
      * 解析K线响应数据
      */
-    private static List<Kline> parseKlinesResponse(String response, String symbol, String interval) throws IOException {
+    private static List<HashkeyKline> parseKlinesResponse(String response, String symbol, String interval)
+            throws IOException {
         List<List<Object>> rawData = objectMapper.readValue(response, new TypeReference<List<List<Object>>>() {});
-        List<Kline> klines = new ArrayList<>();
+        List<HashkeyKline> klines = new ArrayList<>();
 
         for (List<Object> item : rawData) {
             Object[] arr = item.toArray();
-            Kline kline = Kline.fromArray(arr);
+            HashkeyKline kline = HashkeyKline.fromArray(arr);
             kline.setSymbol(symbol);
             kline.setInterval(interval);
             klines.add(kline);
         }
 
         return klines;
-    }
-
-    /**
-     * 测试入口
-     */
-    public static void main(String[] args) {
-        HashkeyHistoryFetcher fetcher = new HashkeyHistoryFetcher();
-        try {
-            List<Kline> klines = fetcher.fetchKlines("BTCUSD", "1d", 20);
-            for (Kline kline : klines) {
-                System.out.println(kline);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 }

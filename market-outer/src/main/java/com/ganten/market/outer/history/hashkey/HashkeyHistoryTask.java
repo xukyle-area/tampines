@@ -13,7 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 public class HashkeyHistoryTask extends BaseHistoryTask {
 
     public List<DayHistoryQuote> getLatestDayCandle(Contract contract, int limit) {
-        List<Kline> fetchKlines = null;
+        List<HashkeyKline> fetchKlines = null;
         try {
             String symbol = contract.getBase() + contract.getQuote();
             fetchKlines = HashkeyHistoryFetcher.fetchKlines(symbol, "1d", limit);
@@ -25,7 +25,7 @@ public class HashkeyHistoryTask extends BaseHistoryTask {
         }
 
         List<DayHistoryQuote> result = new ArrayList<>();
-        for (Kline kline : fetchKlines) {
+        for (HashkeyKline kline : fetchKlines) {
             DayHistoryQuote quote = new DayHistoryQuote(kline.getOpenTime(), contract.getId(), Market.HASHKEY,
                     kline.getClosePrice().toPlainString());
             result.add(quote);
@@ -34,7 +34,7 @@ public class HashkeyHistoryTask extends BaseHistoryTask {
     }
 
     public List<DayHistoryQuote> getDayCandleBetween(Contract contract, long start, long end) {
-        List<Kline> fetchKlines = null;
+        List<HashkeyKline> fetchKlines = null;
         try {
             String symbol = contract.getBase() + contract.getQuote();
             fetchKlines = HashkeyHistoryFetcher.fetchKlines(symbol, "1d", 100, start, end);
@@ -45,7 +45,7 @@ public class HashkeyHistoryTask extends BaseHistoryTask {
             return null;
         }
         List<DayHistoryQuote> result = new ArrayList<>();
-        for (Kline kline : fetchKlines) {
+        for (HashkeyKline kline : fetchKlines) {
             DayHistoryQuote quote = new DayHistoryQuote(kline.getOpenTime(), contract.getId(), Market.HASHKEY,
                     kline.getClosePrice().toPlainString());
             result.add(quote);
